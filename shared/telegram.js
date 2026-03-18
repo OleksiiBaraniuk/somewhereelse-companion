@@ -1,4 +1,4 @@
-/**
+**
  * Telegram Web App SDK Integration
  * SomewhereElse Companion
  */
@@ -42,23 +42,43 @@ export function initTelegram() {
 
 /**
  * Отримати дані користувача Telegram
+ * Спробує отримати з Telegram WebApp, якщо не вдасться - з URL параметрів
  */
 export function getTelegramUser() {
-  if (!tg) {
-    // Режим розробки - повертаємо тестового користувача
-    if (isDevelopmentMode()) {
-      return {
-        id: 123456789,
-        first_name: 'Test',
-        last_name: 'User',
-        username: 'testuser',
-        language_code: 'uk'
-      }
+  // Спочатку спробувати отримати з Telegram WebApp
+  if (tg) {
+    const user = tg.initDataUnsafe?.user
+    if (user) {
+      return user
     }
-    return null
   }
   
-  return tg.initDataUnsafe?.user || null
+  // Якщо не в Telegram або немає даних - спробувати з URL параметрів
+  const params = new URLSearchParams(window.location.search)
+  const userId = params.get('tg_user_id')
+  
+  if (userId) {
+    return {
+      id: parseInt(userId),
+      first_name: params.get('tg_first_name') || 'Guest',
+      last_name: params.get('tg_last_name') || null,
+      username: params.get('tg_username') || null,
+      language_code: params.get('tg_language_code') || 'uk'
+    }
+  }
+  
+  // Режим розробки - повертаємо тестового користувача
+  if (isDevelopmentMode()) {
+    return {
+      id: 123456789,
+      first_name: 'Test',
+      last_name: 'User',
+      username: 'testuser',
+      language_code: 'uk'
+    }
+  }
+  
+  return null
 }
 
 /**

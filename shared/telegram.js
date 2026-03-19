@@ -1,4 +1,4 @@
-**
+/**
  * Telegram Web App SDK Integration
  * SomewhereElse Companion
  */

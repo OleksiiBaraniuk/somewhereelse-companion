@@ -22,11 +22,11 @@ export default {
     'Players take turns rolling a six-sided die',
     'and placing it in one of their three columns.',
     'Hit bullseye for maximum points',
-    'The game ends when one player fills their grid'
-    'Sum the face value of all dice in your columns'
-    'If a column has two dice of the same number, those dice are    doubled'
-    'Or tripled if there three in row'
-    'Your Dice can be destroyed once Enemy place dice with same value'
+    'The game ends when one player fills their grid',
+    'Sum the face value of all dice in your columns',
+    'If a column has two dice of the same number, those dice are    doubled',
+    'Or tripled if there three in row',
+    'Your Dice can be destroyed once Enemy place dice with same value',
   ]
 }
 

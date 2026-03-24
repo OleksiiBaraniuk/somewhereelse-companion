@@ -401,6 +401,7 @@
             gameState = 'countdown';
             countdownValue = 3;
             score = 0;
+            mistakes = 0;
             maxTime = 2000;
             updateScore();
             
@@ -444,20 +445,20 @@
                 document.querySelectorAll('.dpad-btn').forEach(btn => btn.classList.remove('highlight'));
                 nextLetter();
             } else if ('WASD'.includes(pressed)) {
-    // Неправильна кнопка — тільки якщо це одна з WASD
-    mistakes++;
-    if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+                // Неправильна кнопка — тільки якщо це одна з WASD
+                mistakes++;
+                if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
 
-    // Підсвітити неправильну кнопку червоним
-    const wrongBtn = document.querySelector(`.dpad-btn[data-key="${pressed}"]`);
-    if (wrongBtn) {
-        wrongBtn.style.borderColor = '#ef4444';
-        wrongBtn.style.boxShadow = '0 0 16px rgba(239,68,68,0.7)';
-        setTimeout(() => {
-            wrongBtn.style.borderColor = '';
-            wrongBtn.style.boxShadow = '';
-        }, 400);
-    }
+                // Підсвітити неправильну кнопку червоним
+                const wrongBtn = document.querySelector(`.dpad-btn[data-key="${pressed}"]`);
+                if (wrongBtn) {
+                    wrongBtn.style.borderColor = '#ef4444';
+                    wrongBtn.style.boxShadow = '0 0 16px rgba(239,68,68,0.7)';
+                    setTimeout(() => {
+                    wrongBtn.style.borderColor = '';
+                    wrongBtn.style.boxShadow = '';
+                }, 400);
+            }
 
     if (mistakes >= MAX_MISTAKES) {
         // Програш через помилки
@@ -471,10 +472,10 @@
             localStorage.setItem('qte-highscore', highScore);
             updateScore();
         }
-    } else {
-        document.getElementById('status').textContent = `❌ Wrong! ${MAX_MISTAKES - mistakes} mistake${MAX_MISTAKES - mistakes > 1 ? 's' : ''} left`;
-        document.getElementById('status').className = 'status fail';
-        setTimeout(() => {
+            } else {
+                document.getElementById('status').textContent = `❌ Wrong! ${MAX_MISTAKES - mistakes} mistake${MAX_MISTAKES - mistakes > 1 ? 's' : ''} left`;
+                document.getElementById('status').className = 'status fail';
+                setTimeout(() => {
             if (gameState === 'playing') {
                 document.getElementById('status').className = 'status';
                 document.getElementById('status').textContent = `${{'W':'⬆️','A':'⬅️','S':'⬇️','D':'➡️'}[currentLetter]} Натисни: ${currentLetter}`;

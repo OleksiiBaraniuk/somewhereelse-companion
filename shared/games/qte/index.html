@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quick Time Challenge</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #e8e8e8;
+            padding: 10px;
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            background: rgba(30, 30, 40, 0.9);
+            border: 3px solid #8b7355;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            max-width: 700px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #d4af37;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+            font-size: 2em;
+        }
+
+        .subtitle {
+            color: #999;
+            margin-bottom: 20px;
+            font-style: italic;
+            font-size: 0.9em;
+        }
+
+        canvas {
+            border: 3px solid #8b7355;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+            background: radial-gradient(circle at center, #2a2a3a, #1a1a2a);
+            display: block;
+            margin: 0 auto 20px;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .controls {
+            margin: 15px 0;
+        }
+
+        button {
+            background: #8b7355;
+            color: #fff;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s;
+            font-family: 'Georgia', serif;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            touch-action: manipulation;
+        }
+
+        button:active {
+            transform: scale(0.95);
+            background: #a68968;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            font-size: 18px;
+            margin: 15px 0;
+            min-height: 25px;
+            color: #d4af37;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .score-display {
+            color: #999;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        .score-display span {
+            color: #d4af37;
+            font-weight: bold;
+        }
+
+        .instructions {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .fail {
+            color: #ef4444 !important;
+            font-weight: bold;
+        }
+
+        .keyboard-hint {
+            color: #d4af37;
+            font-size: 14px;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(139, 115, 85, 0.2);
+            border-radius: 8px;
+            border: 1px solid #8b7355;
+        }
+
+        @media (max-width: 600px) {
+            .game-container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 1.5em;
+            }
+            
+            button {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+            
+            .status {
+                font-size: 16px;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>⚡ Quick Time Challenge</h1>
+        <p class="subtitle">Перевірка реакції</p>
+
+        <canvas id="canvas" width="600" height="400"></canvas>
+
+        <div class="status" id="status">Натисніть START щоб почати гру!</div>
+        <div class="score-display" id="score">Рахунок: <span>0</span> | Рекорд: <span>0</span></div>
+
+        <!-- D-Pad controller -->
+        <div class="dpad-wrapper">
+            <div class="dpad" id="dpad">
+                <button class="dpad-btn" data-key="W">W</button>
+                <button class="dpad-btn" data-key="A">A</button>
+                <button class="dpad-btn" data-key="S">S</button>
+                <button class="dpad-btn" data-key="D">D</button>
+                <div class="dpad-center"></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="startBtn" onclick="startGame()">🎮 START</button>
+            <button onclick="resetScore()">🔄 Скинути рекорд</button>
+        </div>
+
+        <div class="instructions">
+            <strong>Як грати:</strong><br>
+            • Натисни кнопку W A S D що засвітилась<br>
+            • Встигни до закінчення часу<br>
+            • З кожним раундом швидше!
+        </div>
+    </div>
+
+    <script>
+        // Ініціалізація Telegram Web App
+        let tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        tg.setHeaderColor('#1a1a2e');
+        tg.setBackgroundColor('#16213e');
+
+        // Кнопка "Назад"
+        tg.BackButton.show();
+        tg.BackButton.onClick(() => {
+            window.history.back();
+        });
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Адаптація під розмір екрану
+        function resizeCanvas() {
+            const container = document.querySelector('.game-container');
+            const maxWidth = Math.min(600, container.clientWidth - 40);
+            const scale = maxWidth / 600;
+            canvas.style.width = maxWidth + 'px';
+            canvas.style.height = (400 * scale) + 'px';
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        const letters = 'WASD';
+        let particles = [];
+        let currentLetter = '';
+        let letterX = 0;
+        let letterY = 0;
+        let maxTime = 2000;
+        let gameState = 'idle';
+        let countdownValue = 3;
+        let score = 0;
+        let highScore = localStorage.getItem('qte-highscore') || 0;
+        let letterStartTime = 0;
+
+        // Частинки
+        for (let i = 0; i < 40; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 2 + 1,
+                speedY: Math.random() * 0.3 + 0.1,
+                speedX: (Math.random() - 0.5) * 0.2,
+                opacity: Math.random() * 0.4 + 0.2
+            });
+        }
+
+        function drawParticles() {
+            particles.forEach(p => {
+                ctx.save();
+                ctx.globalAlpha = p.opacity * (0.5 + Math.sin(Date.now() * 0.002 + p.x) * 0.3);
+                ctx.fillStyle = '#8b7355';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+
+                p.y -= p.speedY;
+                p.x += p.speedX;
+
+                if (p.y < 0) p.y = canvas.height;
+                if (p.x < 0) p.x = canvas.width;
+                if (p.x > canvas.width) p.x = 0;
+            });
+        }
+
+        function drawAncientCircle() {
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            
+            ctx.strokeStyle = gameState === 'lose' ? '#ef4444' : '#8b7355';
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = ctx.strokeStyle;
+            ctx.globalAlpha = 0.6;
+            ctx.beginPath();
+            ctx.arc(0, 0, 150, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.strokeStyle = gameState === 'lose' ? '#ef4444' : '#d4af37';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 0, 100, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.globalAlpha = 0.4;
+            for (let i = 0; i < 12; i++) {
+                const angle = (i / 12) * Math.PI * 2;
+                const x = Math.cos(angle) * 125;
+                const y = Math.sin(angle) * 125;
+                
+                ctx.fillStyle = '#d4af37';
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.restore();
+        }
+
+        function drawTimerRing() {
+            if (gameState !== 'playing') return;
+            
+            const elapsed = Date.now() - letterStartTime;
+            const progress = Math.max(0, 1 - elapsed / maxTime);
+            
+            ctx.save();
+            ctx.translate(letterX, letterY);
+            
+            ctx.strokeStyle = 'rgba(100, 100, 100, 0.3)';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.arc(0, 0, 45, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            let color;
+            if (progress > 0.5) color = '#4ade80';
+            else if (progress > 0.25) color = '#d4af37';
+            else color = '#ef4444';
+            
+            ctx.strokeStyle = color;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = color;
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.arc(0, 0, 45, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2);
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+
+        function drawLetter() {
+            ctx.save();
+            
+            if (gameState === 'countdown') {
+                ctx.translate(centerX, centerY);
+                ctx.fillStyle = '#d4af37';
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = '#d4af37';
+                ctx.font = 'bold 100px Georgia';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(countdownValue, 0, 0);
+            } else if (gameState === 'playing' && currentLetter) {
+                ctx.translate(letterX, letterY);
+                const elapsed = Date.now() - letterStartTime;
+                const progress = elapsed / maxTime;
+                
+                let color = '#4ade80';
+                if (progress > 0.5) color = '#d4af37';
+                if (progress > 0.75) color = '#ef4444';
+                
+                ctx.fillStyle = color;
+                ctx.shadowBlur = 25;
+                ctx.shadowColor = color;
+                ctx.font = 'bold 50px Georgia';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(currentLetter, 0, 0);
+            } else if (gameState === 'lose') {
+                ctx.translate(centerX, centerY);
+                ctx.fillStyle = '#ef4444';
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = '#ef4444';
+                ctx.font = 'bold 35px Georgia';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('ЧАС ВИЙШОВ!', 0, -25);
+                
+                ctx.font = 'bold 50px Georgia';
+                ctx.fillStyle = '#d4af37';
+                ctx.shadowColor = '#d4af37';
+                ctx.fillText(currentLetter, 0, 35);
+            } else if (gameState === 'idle') {
+                ctx.translate(centerX, centerY);
+                ctx.fillStyle = '#8b7355';
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#8b7355';
+                ctx.font = 'bold 28px Georgia';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.globalAlpha = 0.6 + Math.sin(Date.now() * 0.003) * 0.2;
+                ctx.fillText('⚡ QTE ⚡', 0, 0);
+            }
+            
+            ctx.restore();
+        }
+
+        function startGame() {
+            // Вібрація
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('medium');
+            }
+
+            document.getElementById('startBtn').disabled = true;
+
+            gameState = 'countdown';
+            countdownValue = 3;
+            score = 0;
+            maxTime = 2000;
+            updateScore();
+            
+            const countdownInterval = setInterval(() => {
+                countdownValue--;
+                if (countdownValue <= 0) {
+                    clearInterval(countdownInterval);
+                    gameState = 'playing';
+                    nextLetter();
+                }
+            }, 1000);
+        }
+
+        function nextLetter() {
+            currentLetter = letters[Math.floor(Math.random() * letters.length)];
+            const padding = 80;
+            letterX = padding + Math.random() * (canvas.width - padding * 2);
+            letterY = padding + Math.random() * (canvas.height - padding * 2);
+            letterStartTime = Date.now();
+            const keyIcons = { W: '⬆️', A: '⬅️', S: '⬇️', D: '➡️' };
+            document.getElementById('status').textContent = `${keyIcons[currentLetter] || ''} Натисни: ${currentLetter}`;
+            // Highlight correct dpad button
+            document.querySelectorAll('.dpad-btn').forEach(btn => btn.classList.remove('highlight'));
+            const target = document.querySelector(`.dpad-btn[data-key="${currentLetter}"]`);
+            if (target) target.classList.add('highlight');
+            document.getElementById('status').className = 'status';
+        }
+
+        function handleKeyPress(e) {
+            if (gameState !== 'playing') return;
+            
+            const pressed = e.key.toUpperCase();
+            
+            if (pressed === currentLetter) {
+                if (tg.HapticFeedback) {
+                    tg.HapticFeedback.notificationOccurred('success');
+                }
+                score++;
+                updateScore();
+                maxTime = Math.max(400, maxTime - 30);
+                document.querySelectorAll('.dpad-btn').forEach(btn => btn.classList.remove('highlight'));
+                nextLetter();
+            }
+        }
+
+        function checkTimeout() {
+            if (gameState !== 'playing') return;
+            
+            const elapsed = Date.now() - letterStartTime;
+            if (elapsed >= maxTime) {
+                if (tg.HapticFeedback) {
+                    tg.HapticFeedback.notificationOccurred('error');
+                }
+                gameState = 'lose';
+                document.getElementById('status').textContent = `💀 Час вийшов! Треба було: ${currentLetter}`;
+                document.getElementById('status').className = 'status fail';
+                document.getElementById('startBtn').disabled = false;
+
+                
+                if (score > highScore) {
+                    highScore = score;
+                    localStorage.setItem('qte-highscore', highScore);
+                    updateScore();
+                }
+            }
+        }
+
+        function updateScore() {
+            const scoreSpans = document.querySelectorAll('#score span');
+            scoreSpans[0].textContent = score;
+            scoreSpans[1].textContent = highScore;
+        }
+
+        function resetScore() {
+            if (confirm('Скинути рекорд?')) {
+                highScore = 0;
+                localStorage.setItem('qte-highscore', 0);
+                updateScore();
+            }
+        }
+
+        function draw() {
+            ctx.fillStyle = 'rgba(26, 26, 58, 0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            drawParticles();
+            drawAncientCircle();
+            drawTimerRing();
+            drawLetter();
+            
+            checkTimeout();
+            
+            requestAnimationFrame(draw);
+        }
+
+        document.addEventListener('keydown', handleKeyPress);
+
+        // D-Pad touch & click events
+        document.querySelectorAll('.dpad-btn').forEach(btn => {
+            const key = btn.getAttribute('data-key');
+
+            // touchstart — immediate, no delay, multitouch safe
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                btn.classList.add('active');
+                handleKeyPress({ key });
+            }, { passive: false });
+
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                btn.classList.remove('active');
+            }, { passive: false });
+
+            btn.addEventListener('touchcancel', () => {
+                btn.classList.remove('active');
+            });
+
+            // Mouse fallback for desktop
+            btn.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                btn.classList.add('active');
+                handleKeyPress({ key });
+            });
+
+            btn.addEventListener('mouseup', () => btn.classList.remove('active'));
+            btn.addEventListener('mouseleave', () => btn.classList.remove('active'));
+        });
+
+        updateScore();
+        draw();
+    </script>
+</body>
+</html>

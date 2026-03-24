@@ -233,6 +233,8 @@
         let score = 0;
         let highScore = localStorage.getItem('qte-highscore') || 0;
         let letterStartTime = 0;
+        let mistakes = 0;
+        const MAX_MISTAKES = 3;
 
         // Частинки
         for (let i = 0; i < 40; i++) {
@@ -441,7 +443,45 @@
                 maxTime = Math.max(400, maxTime - 30);
                 document.querySelectorAll('.dpad-btn').forEach(btn => btn.classList.remove('highlight'));
                 nextLetter();
+            } else if ('WASD'.includes(pressed)) {
+    // Неправильна кнопка — тільки якщо це одна з WASD
+    mistakes++;
+    if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+
+    // Підсвітити неправильну кнопку червоним
+    const wrongBtn = document.querySelector(`.dpad-btn[data-key="${pressed}"]`);
+    if (wrongBtn) {
+        wrongBtn.style.borderColor = '#ef4444';
+        wrongBtn.style.boxShadow = '0 0 16px rgba(239,68,68,0.7)';
+        setTimeout(() => {
+            wrongBtn.style.borderColor = '';
+            wrongBtn.style.boxShadow = '';
+        }, 400);
+    }
+
+    if (mistakes >= MAX_MISTAKES) {
+        // Програш через помилки
+        gameState = 'lose';
+        document.getElementById('status').textContent = `💀 3 mistakes! Needed: ${currentLetter}`;
+        document.getElementById('status').className = 'status fail';
+        document.getElementById('startBtn').disabled = false;
+        document.querySelectorAll('.dpad-btn').forEach(btn => btn.classList.remove('highlight'));
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem('qte-highscore', highScore);
+            updateScore();
+        }
+    } else {
+        document.getElementById('status').textContent = `❌ Wrong! ${MAX_MISTAKES - mistakes} mistake${MAX_MISTAKES - mistakes > 1 ? 's' : ''} left`;
+        document.getElementById('status').className = 'status fail';
+        setTimeout(() => {
+            if (gameState === 'playing') {
+                document.getElementById('status').className = 'status';
+                document.getElementById('status').textContent = `${{'W':'⬆️','A':'⬅️','S':'⬇️','D':'➡️'}[currentLetter]} Натисни: ${currentLetter}`;
             }
+        }, 600);
+    }
+}
         }
 
         function checkTimeout() {

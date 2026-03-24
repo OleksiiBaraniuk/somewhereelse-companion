@@ -18,6 +18,9 @@ import {
     showAlert,
 } from './telegram.js'
 
+import { loadAllGames } from './game-loader.js'
+import { loadAllFeatures } from './feature-loader.js'
+
 // ================================================
 // GLOBAL STATE
 // ================================================
@@ -63,9 +66,94 @@ async function init() {
         
         // Завантажити статистику
         await loadPlayerStats()
+        
+        // Завантажити та показати ігри і фічі
+        await renderGames()
+        await renderFeatures()
     } catch (error) {
         console.error('Initialization error:', error)
         showAlert('Error loading data. Please check your connection.')
+    }
+}
+
+// ================================================
+// DYNAMIC RENDERING
+// ================================================
+
+async function renderGames() {
+    try {
+        console.log('🎮 Loading games...')
+        const games = await loadAllGames()
+        const container = document.querySelector('.horizontal-scroll')
+        
+        if (!container) {
+            console.warn('Games container not found')
+            return
+        }
+        
+        // Очистити контейнер
+        container.innerHTML = ''
+        
+        // Рендер кожної гри
+        games.forEach(game => {
+            const gameCard = document.createElement('div')
+            gameCard.className = `game-card ${game.status === 'coming-soon' ? 'coming-soon' : ''}`
+            gameCard.onclick = () => openGame(game.id)
+            
+            gameCard.innerHTML = `
+                <div class="game-icon">${game.icon}</div>
+                <h4>${game.title}</h4>
+                <p class="game-desc">${game.description}</p>
+                ${game.status === 'beta' ? '<span class="beta-badge">BETA</span>' : ''}
+            `
+            
+            container.appendChild(gameCard)
+        })
+        
+        console.log(`✅ Loaded ${games.length} games`)
+    } catch (error) {
+        console.error('Error loading games:', error)
+    }
+}
+
+async function renderFeatures() {
+    try {
+        console.log('🚢 Loading features...')
+        const features = await loadAllFeatures()
+        const container = document.querySelector('#campaignFeatures')
+        
+        if (!container) {
+            console.warn('Features container not found')
+            return
+        }
+        
+        // Очистити контейнер
+        container.innerHTML = ''
+        
+        // Рендер кожної фічі
+        features.forEach(feature => {
+            const featureCard = document.createElement('div')
+            featureCard.className = `feature-card ${feature.status === 'coming-soon' ? 'coming-soon' : ''}`
+            featureCard.onclick = () => openFeature(feature.id)
+            
+            const itemsList = feature.items 
+                ? `<ul class="feature-list">
+                    ${feature.items.map(item => `<li>${item}</li>`).join('')}
+                   </ul>`
+                : ''
+            
+            featureCard.innerHTML = `
+                <div class="feature-icon">${feature.icon}</div>
+                <h4>${feature.title}</h4>
+                ${itemsList}
+            `
+            
+            container.appendChild(featureCard)
+        })
+        
+        console.log(`✅ Loaded ${features.length} features`)
+    } catch (error) {
+        console.error('Error loading features:', error)
     }
 }
 
@@ -175,7 +263,7 @@ window.viewCharacterSheet = function() {
     showAlert('📜 Character Sheet coming soon!')
 }
 
-window.openGame = function(gameType) {
+window.openGame = function(gameId) {
     hapticFeedback('medium')
     
     if (!currentCharacter) {
@@ -183,9 +271,20 @@ window.openGame = function(gameType) {
         return
     }
     
-    // TODO: створити ігри
-    showAlert(`🎮 ${gameType} game coming soon!`)
-    // window.location.href = `games/${gameType}/index.html`
+    // TODO: Navigate to game
+    window.location.href = `shared/games/${gameId}/index.html`
+}
+
+window.openFeature = function(featureId) {
+    hapticFeedback('medium')
+    
+    if (!currentCharacter) {
+        showAlert('Please create a character first!')
+        return
+    }
+    
+    // TODO: Navigate to feature
+    window.location.href = `shared/features/${featureId}/index.html`
 }
 
 window.openCombat = function() {
@@ -223,3 +322,10 @@ window.openNotes = function() {
 // ================================================
 
 init()
+
+// ============================================================
+// Credits
+// ============================================================
+// Idea: Baraniuk
+// Code: Claude (Anthropic AI Assistant)
+// ============================================================

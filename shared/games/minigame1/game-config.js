@@ -8,7 +8,7 @@ export default {
   icon: '🎯',
   title: 'KnuckleBones',
   description: 'Popular kids and adult game to spare time',
-  status: 'coming-soon',
+  status: 'available',
   difficulty: 'medium',
   tags: ['skill', 'minigame'],
   

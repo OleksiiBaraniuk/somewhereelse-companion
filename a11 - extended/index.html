@@ -78,12 +78,11 @@
                 <div class="quick-action-card" onclick="openInventory()">
                     <div class="action-icon">🎒</div>
                     <div class="action-label">Inventory</div>
-                    <div class="action-badge">12</div>
                 </div>
                 <div class="quick-action-card" onclick="openGold()">
                     <div class="action-icon">💰</div>
-                    <div class="action-label">Gold</div>
-                    <div class="action-badge">342 GP</div>
+                    <div class="action-label">Wallet</div>
+                    <div class="action-badge hidden" id="walletBadge"></div>
                 </div>
                 <div class="quick-action-card" onclick="openNotes()">
                     <div class="action-icon">📝</div>
@@ -95,47 +94,16 @@
         <!-- Mini Games -->
         <section class="minigames-section section">
             <h3 class="section-title">Mini Games & Activities</h3>
-            <div class="horizontal-scroll">
-                <div class="game-card" onclick="openGame('lockpicking')">
-                    <div class="game-icon">🔒</div>
-                    <h4>Lockpicking Challenge</h4>
-                    <p class="game-desc">Test your dexterity and break locks</p>
-                </div>
-                <div class="game-card" onclick="openGame('qte')">
-                    <div class="game-icon">⚡</div>
-                    <h4>Quick Time Event</h4>
-                    <p class="game-desc">React quickly to succeed!</p>
-                </div>
-                <div class="game-card coming-soon">
-                    <div class="game-icon">🎯</div>
-                    <h4>Archery Range</h4>
-                    <p class="game-desc">Test your aim and precision</p>
-                </div>
+            <div class="horizontal-scroll" id="gamesContainer">
+                <!-- Динамічно завантажується через game-loader.js -->
             </div>
         </section>
 
         <!-- Campaign Features -->
         <section class="features-section section">
             <h3 class="section-title">Campaign Features</h3>
-            <div class="horizontal-scroll">
-                <div class="feature-card coming-soon">
-                    <div class="feature-icon">🚢</div>
-                    <h4>Ship Customization</h4>
-                    <ul class="feature-list">
-                        <li>Hull: Reinforced Oak</li>
-                        <li>Sails: Storm Resistant</li>
-                        <li>Cannons: 12x Heavy Artillery</li>
-                    </ul>
-                </div>
-                <div class="feature-card coming-soon">
-                    <div class="feature-icon">⚔️</div>
-                    <h4>Combat Tracker</h4>
-                    <ul class="feature-list">
-                        <li>Initiative Order</li>
-                        <li>Condition Tracking</li>
-                        <li>Spell Slot Manager</li>
-                    </ul>
-                </div>
+            <div class="horizontal-scroll" id="campaignFeatures">
+                <!-- Динамічно завантажується через feature-loader.js -->
             </div>
         </section>
     </div>
@@ -144,6 +112,32 @@
     <footer class="app-footer">
         <p>"Adventure awaits those brave enough to seek it."</p>
     </footer>
+
+    <!-- Wallet Modal -->
+    <div class="modal-overlay hidden" id="walletModal">
+        <div class="modal">
+            <h2>💰 Гаманець</h2>
+            <p class="text-muted mb-md">Введіть кількість монет</p>
+            <div class="wallet-coins">
+                <div>
+                    <label for="walletGold">🟡 Золото (GP)</label>
+                    <input type="number" id="walletGold" min="0" placeholder="0">
+                </div>
+                <div>
+                    <label for="walletSilver">⚪ Срібло (SP)</label>
+                    <input type="number" id="walletSilver" min="0" placeholder="0">
+                </div>
+                <div>
+                    <label for="walletCopper">🟤 Мідь (CP)</label>
+                    <input type="number" id="walletCopper" min="0" placeholder="0">
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-secondary" onclick="closeWallet()">Закрити</button>
+                <button class="btn-primary" onclick="saveWallet()">💾 Зберегти</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Character Creation Modal -->
     <div class="modal-overlay hidden" id="characterModal">

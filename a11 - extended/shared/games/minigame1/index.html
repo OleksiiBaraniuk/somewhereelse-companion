@@ -546,6 +546,7 @@
     <div class="tavern-sign">
         <h1>KnuckleBones</h1>
         <p class="sub">A game of dice & cunning</p>
+    <p class="sub" id="betGoldDisplay" style="color:var(--gold);margin-top:6px">💰 Your gold: …</p>
     </div>
 
     <div class="divider"></div>
@@ -711,7 +712,9 @@ function hapticNote(t) { tg?.HapticFeedback?.notificationOccurred(t); }
 // STATE
 // ══════════════════════════════════════
 const COLS = 3, ROWS = 3;
+const GOLD_KEY = 'companion-gold';
 let bet = 0;
+let playerGold = parseInt(localStorage.getItem(GOLD_KEY) || '0');
 
 // boards[col][row] — 0 = empty, 1-6 = die value
 let playerBoard, botBoard;
@@ -738,12 +741,21 @@ function selectBet(amount, el) {
 // ══════════════════════════════════════
 function startGame() {
     if (!bet) return;
+    if (playerGold < bet) {
+        if (tg) tg.showAlert(`Not enough gold! You have ${playerGold} GP.`);
+        else alert(`Not enough gold! You have ${playerGold} GP.`);
+        return;
+    }
     haptic('medium');
 
     playerBoard = Array.from({length: COLS}, () => Array(ROWS).fill(0));
     botBoard    = Array.from({length: COLS}, () => Array(ROWS).fill(0));
     currentRoll = null;
     animating = false;
+
+    // Deduct bet from player gold
+    playerGold -= bet;
+    localStorage.setItem(GOLD_KEY, playerGold);
 
     // Player goes first
     currentTurn = 'player';
@@ -1070,28 +1082,32 @@ function endGame() {
     rsBot.classList.remove('winner');
 
     if (ps > bs) {
-        // Player wins
+        // Player wins — gets both bets
+        playerGold += pot;
+        localStorage.setItem(GOLD_KEY, playerGold);
         hapticNote('success');
         document.getElementById('resultTrophy').textContent = '🏆';
         document.getElementById('resultTitle').className    = 'result-title win';
         document.getElementById('resultTitle').textContent  = 'Victory!';
-        document.getElementById('rpNote').textContent       = `You win ${pot} GP!`;
+        document.getElementById('rpNote').textContent       = `You win ${pot} GP! New balance: ${playerGold} GP`;
         rsPlayer.classList.add('winner');
     } else if (bs > ps) {
-        // Bot wins
+        // Bot wins — player already lost their bet
         hapticNote('error');
         document.getElementById('resultTrophy').textContent = '💀';
         document.getElementById('resultTitle').className    = 'result-title lose';
         document.getElementById('resultTitle').textContent  = 'Defeated!';
-        document.getElementById('rpNote').textContent       = `The Keeper wins ${pot} GP`;
+        document.getElementById('rpNote').textContent       = `The Keeper wins. Your balance: ${playerGold} GP`;
         rsBot.classList.add('winner');
     } else {
-        // Draw
+        // Draw — return player's bet only
+        playerGold += bet;
+        localStorage.setItem(GOLD_KEY, playerGold);
         haptic('medium');
         document.getElementById('resultTrophy').textContent = '⚖️';
         document.getElementById('resultTitle').className    = 'result-title draw';
         document.getElementById('resultTitle').textContent  = 'Draw!';
-        document.getElementById('rpNote').textContent       = 'Each player keeps their bet';
+        document.getElementById('rpNote').textContent       = `Bet returned. Your balance: ${playerGold} GP`;
     }
 
     setTimeout(() => showScreen('resultScreen'), 600);
@@ -1133,15 +1149,31 @@ function confirmForfeit() {
 
 function goToBet() {
     bet = 0;
+    playerGold = parseInt(localStorage.getItem(GOLD_KEY) || '0');
     document.querySelectorAll('.bet-card').forEach(c => c.classList.remove('selected'));
     document.getElementById('startBtn').disabled = true;
     document.getElementById('potDisplay').style.display = 'none';
+    updateGoldDisplay();
     showScreen('betScreen');
+}
+
+function updateGoldDisplay() {
+    const el = document.getElementById('betGoldDisplay');
+    if (el) el.textContent = `💰 Your gold: ${playerGold} GP`;
+    // Disable bet cards player can't afford
+    document.querySelectorAll('.bet-card').forEach(card => {
+        const amount = parseInt(card.dataset.bet);
+        card.style.opacity = playerGold >= amount ? '1' : '0.35';
+        card.style.pointerEvents = playerGold >= amount ? 'auto' : 'none';
+    });
 }
 
 function goHome() {
     window.history.back();
 }
+
+// Init gold display on load
+updateGoldDisplay();
 </script>
 </body>
 </html>

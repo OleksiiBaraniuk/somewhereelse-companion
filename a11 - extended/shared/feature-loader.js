@@ -5,7 +5,7 @@
 
 // Список всіх доступних фіч (просто ID папок)
 const AVAILABLE_FEATURES = [
-  'ship-customization'
+  'ship-management'
 ]
 
 /**

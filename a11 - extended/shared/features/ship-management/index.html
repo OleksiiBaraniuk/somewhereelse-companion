@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ship Management</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  .ship-page { max-width: 480px; margin: 0 auto; padding: 16px 16px 2rem; }
+  .panel-label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; color: #a89b87; text-transform: uppercase; padding: 0.5rem 0 0.25rem; }
+
+  .ship-panel { background: #2d1f15; border-radius: 12px; border: 1px solid #6b5b4d; margin: 0 0 1rem; overflow: hidden; }
+  .ship-visual { width: 100%; height: 160px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+  .ship-visual img { width: 100%; height: 100%; object-fit: cover; opacity: 0.85; }
+  .ship-visual .ship-placeholder { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+  .ship-name-tag { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); font-size: 12px; color: #a89b87; background: #1a0f0a; border: 1px solid #6b5b4d; border-radius: 20px; padding: 4px 14px; white-space: nowrap; z-index: 2; }
+
+  .equipped-row { display: grid; gap: 8px; padding: 0 12px 12px; }
+  .equipped-row.cols-2 { grid-template-columns: 1fr 1fr; }
+  .equipped-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .equipped-card { background: #1a0f0a; border: 1px solid #6b5b4d; border-radius: 8px; padding: 10px 12px; min-height: 80px; }
+  .equipped-card-type { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: #a89b87; margin: 0 0 5px; }
+  .equipped-card-name { font-size: 13px; font-weight: 500; color: #f5e6d3; margin: 0 0 8px; }
+  .equipped-card-empty { font-size: 12px; color: #6b5b4d; font-style: italic; }
+  .equipped-card-rarity { font-size: 10px; margin-top: 7px; padding-top: 6px; border-top: 1px solid #3a2618; color: #a89b87; }
+  .equipped-ship-name { font-size: 14px; font-weight: 500; color: #d4af37; margin: 0 0 8px; }
+  .equipped-price { font-size: 13px; font-weight: 500; color: #d4af37; margin-top: 4px; }
+
+  .stat-line { display: flex; align-items: center; gap: 5px; margin: 3px 0; }
+  .stat-label { font-size: 11px; color: #a89b87; flex: 1; }
+  .stat-pips { display: flex; gap: 2px; }
+  .pip { width: 7px; height: 7px; border-radius: 50%; background: #3a2618; border: 1px solid #6b5b4d; }
+  .pip.g { background: #1D9E75; border-color: #1D9E75; }
+  .pip.a { background: #d4af37; border-color: #d4af37; }
+  .pip.r { background: #c0392b; border-color: #c0392b; }
+  .stat-pips-neg { display: flex; gap: 2px; flex-direction: row-reverse; }
+  .stat-line-neg { display: flex; align-items: center; gap: 5px; margin: 3px 0; }
+  .stat-label-neg { font-size: 11px; color: #c0392b; flex: 1; text-align: right; }
+
+  .shop-panel { background: #2d1f15; border-radius: 12px; border: 1px solid #6b5b4d; overflow: hidden; }
+  .shop-title { padding: 1rem 1rem 0.5rem; border-bottom: 1px solid #3a2618; }
+  .shop-title h2 { font-size: 15px; font-weight: 500; margin: 0 0 2px; color: #d4af37; }
+  .shop-title p { font-size: 12px; color: #a89b87; margin: 0; }
+
+  .mode-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin: 0 1rem 0; border: 1px solid #6b5b4d; border-radius: 8px; overflow: hidden; }
+  .mode-btn { padding: 9px; font-size: 13px; border: none; background: #1a0f0a; color: #a89b87; cursor: pointer; font-family: 'Georgia', serif; transition: background 0.15s, color 0.15s; }
+  .mode-btn:first-child { border-right: 1px solid #6b5b4d; }
+  .mode-btn.active { background: #3a2618; color: #f5e6d3; }
+  .mode-btn:hover:not(.active) { background: #2d1f15; color: #f5e6d3; }
+
+  .upgrade-section { padding: 0.75rem 1rem 0.25rem; }
+  .section-header { font-size: 11px; font-weight: 500; color: #a89b87; letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 8px; }
+  .cards-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
+  .cards-row::-webkit-scrollbar { display: none; }
+
+  .upgrade-card { min-width: 140px; background: #1a0f0a; border: 1px solid #6b5b4d; border-radius: 8px; padding: 10px 12px; cursor: pointer; flex-shrink: 0; transition: border-color 0.15s; }
+  .upgrade-card:hover { border-color: #8b7355; }
+  .upgrade-card.selected { border: 2px solid #1D9E75; background: #0a1f17; }
+  .card-img { width: 100%; height: 56px; background: #3a2618; border: 1px dashed #6b5b4d; border-radius: 4px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; overflow: hidden; }
+  .card-img img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+  .card-img-label { font-size: 9px; color: #6b5b4d; }
+  .card-name { font-size: 13px; font-weight: 500; color: #f5e6d3; margin: 0 0 6px; }
+
+  .ship-card { min-width: 180px; }
+  .ship-card-img { width: 100%; height: 72px; background: #3a2618; border: 1px dashed #6b5b4d; border-radius: 4px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; overflow: hidden; }
+  .ship-card-img img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+  .ship-card-title { font-size: 14px; font-weight: 500; color: #d4af37; margin: 0 0 8px; }
+
+  .card-rarity { font-size: 10px; color: #a89b87; margin: 5px 0 0; }
+  .cost-line { margin-top: 8px; padding-top: 6px; border-top: 1px solid #3a2618; font-size: 11px; color: #a89b87; display: flex; justify-content: space-between; align-items: center; }
+  .cost-val { font-weight: 500; color: #d4af37; }
+  .cost-val.big { font-size: 15px; }
+
+  .divider { height: 1px; background: #3a2618; margin: 0 1rem; }
+  .section-gap { height: 0.75rem; }
+
+  .buy-row { padding: 0.75rem 1rem 1rem; display: flex; align-items: center; gap: 8px; }
+  .balance-chip { font-size: 12px; color: #a89b87; background: #1a0f0a; border: 1px solid #6b5b4d; border-radius: 20px; padding: 5px 12px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .balance-val { font-weight: 500; color: #d4af37; }
+  .action-btn { padding: 8px 14px; font-size: 13px; border-radius: 8px; border: 1px solid #8b7355; background: #3a2618; color: #f5e6d3; cursor: pointer; font-family: 'Georgia', serif; white-space: nowrap; }
+  .action-btn:hover { background: #4a3420; border-color: #d4af37; }
+  .action-btn:disabled { opacity: 0.5; cursor: not-allowed; border-color: #6b5b4d; }
+  .cancel-btn { padding: 8px 14px; font-size: 13px; border-radius: 8px; border: 1px solid #4a2a2a; background: transparent; color: #a89b87; cursor: pointer; font-family: 'Georgia', serif; white-space: nowrap; }
+  .cancel-btn:hover { background: #2a1010; color: #f5e6d3; border-color: #c0392b; }
+
+  .pending-banner { background: #2a1f0a; border: 1px solid #d4af37; border-radius: 8px; padding: 10px 14px; margin: 0 0 1rem; font-size: 12px; color: #d4af37; text-align: center; }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="ship-page">
+
+  <div id="pendingBanner" class="pending-banner hidden">
+    ⏳ Є незакритий запит до DM — очікуй схвалення
+  </div>
+
+  <!-- Current ship state -->
+  <div class="panel-label">Поточний стан</div>
+  <div class="ship-panel">
+    <div class="ship-visual" id="shipVisual">
+      <div class="ship-placeholder">
+        <svg width="260" height="130" viewBox="0 0 260 130" fill="none">
+          <rect x="1" y="1" width="258" height="128" rx="8" fill="none" stroke="#6b5b4d" stroke-dasharray="4 3"/>
+          <text x="130" y="52" text-anchor="middle" font-size="11" fill="#6b5b4d" font-family="Georgia,serif">[ Зображення корабля ]</text>
+          <line x1="60" y1="65" x2="200" y2="65" stroke="#8b7355" stroke-width="0.5" stroke-dasharray="3 2"/>
+          <rect x="80" y="66" width="100" height="35" rx="4" fill="none" stroke="#6b5b4d" stroke-dasharray="3 2"/>
+          <rect x="118" y="44" width="4" height="22" fill="none" stroke="#6b5b4d" stroke-dasharray="2 2"/>
+          <path d="M122 46 L150 57 L122 65 Z" fill="none" stroke="#6b5b4d" stroke-dasharray="2 2"/>
+        </svg>
+      </div>
+      <div class="ship-name-tag" id="shipNameTag">Завантаження...</div>
+    </div>
+
+    <div class="equipped-row cols-2" id="equippedRow">
+      <div class="equipped-card" id="eq-cannon">
+        <div class="equipped-card-type">Гармата</div>
+        <div class="equipped-card-empty">— не встановлено —</div>
+      </div>
+      <div class="equipped-card" id="eq-hull">
+        <div class="equipped-card-type">Корпус</div>
+        <div class="equipped-card-empty">— не встановлено —</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shop -->
+  <div class="panel-label">Крамниця портового майстра</div>
+  <div class="shop-panel">
+    <div class="shop-title">
+      <h2>Зброярня Порту</h2>
+      <p id="shopSubtitle">Оберіть модуль для оснащення</p>
+    </div>
+
+    <div style="padding: 0.75rem 1rem 0.5rem;">
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="btn-upgrade" onclick="setMode('upgrade')">Оснащення</button>
+        <button class="mode-btn" id="btn-ship" onclick="setMode('ship')">Новий Корабель</button>
+      </div>
+    </div>
+
+    <!-- UPGRADE MODE -->
+    <div id="mode-upgrade">
+      <div class="upgrade-section">
+        <div class="section-header">Гармати</div>
+        <div class="cards-row" id="cannons">
+          <div class="upgrade-card" onclick="selectUpgrade(this,'cannons',{name:'Альбатрос',rarity:'Ентузіаст',price:350,power:1,speed:1,speedNeg:0})">
+            <div class="card-img"><img src="../../../assets/icons/PCL.png" onerror="this.parentElement.innerHTML='<span class=card-img-label>зображення</span>'"></div>
+            <div class="card-name">Альбатрос</div>
+            <div class="stat-line"><span class="stat-label">Потужність</span><div class="stat-pips"><div class="pip g"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></div>
+            <div class="stat-line"><span class="stat-label">Швидкостріл.</span><div class="stat-pips"><div class="pip a"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></div>
+            <div class="card-rarity">Ентузіаст</div>
+            <div class="cost-line"><span>Ціна</span><span class="cost-val">350 gp</span></div>
+          </div>
+
+          <div class="upgrade-card" onclick="selectUpgrade(this,'cannons',{name:'Контроль',rarity:'Проста',price:200,power:1,speed:0,speedNeg:0})">
+            <div class="card-img"><img src="../../../assets/icons/PFCL.png" onerror="this.parentElement.innerHTML='<span class=card-img-label>зображення</span>'"></div>
+            <div class="card-name">Контроль</div>
+            <div class="stat-line"><span class="stat-label">Потужність</span><div class="stat-pips"><div class="pip g"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></div>
+            <div class="stat-line"><span class="stat-label">Швидкостріл.</span><div class="stat-pips"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></div>
+            <div class="card-rarity">Проста</div>
+            <div class="cost-line"><span>Ціна</span><span class="cost-val">200 gp</span></div>
+          </div>
+
+          <div class="upgrade-card" onclick="selectUpgrade(this,'cannons',{name:'Муха',rarity:'Ентузіаст',price:300,power:0,speed:2,speedNeg:0})">
+            <div class="card-img"><img src="../../../assets/icons/FCL.png" onerror="this.parentElement.innerHTML='<span class=card-img-label>зображення</span>'"></div>
+            <div class="card-name">Муха</div>
+            <div class="stat-line"><span class="stat-label">Потужність</span><div class="stat-pips"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></div>
+            <div class="stat-line"><span class="stat-label">Швидкостріл.</span><div class="stat-pips"><div class="pip a"></div><div class="pip a"></div><div class="pip"></div><div class="pip"></div></div></div>
+            <div class="card-rarity">Ентузіаст</div>
+            <div class="cost-line"><span>Ціна</span><span class="cost-val">300 gp</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="upgrade-section">
+        <div class="section-header">Корпус</div>
+        <div class="cards-row" id="hulls">
+          <div class="upgrade-card" onclick="selectUpgrade(this,'hulls',{name:'Укріплене дерево',rarity:'Проста',price:125,defense:1})">
+            <div class="card-img"><img src="../../../assets/icons/W.png" onerror="this.parentElement.innerHTML='<span class=card-img-label>зображення</span>'"></div>
+            <div class="card-name">Укріплене дерево</div>
+            <div class="stat-line"><span class="stat-label">Захист</span><div class="stat-pips"><div class="pip g"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></div>
+            <div class="card-rarity">Проста</div>
+            <div class="cost-line"><span>Ціна</span><span class="cost-val">125 gp</span></div>
+          </div>
+
+          <div class="upgrade-card" onclick="selectUpgrade(this,'hulls',{name:'Метал Тонк',rarity:'Проста',price:215,defense:2})">
+            <div class="card-img"><img src="../../../assets/icons/I.png" onerror="this.parentElement.innerHTML='<span class=card-img-label>зображення</span>'"></div>
+            <div class="card-name">Метал Тонк</div>
+            <div class="stat-line"><span class="stat-label">Захист</span><div class="stat-pips"><div class="pip g"></div><div class="pip g"></div><div class="pip"></div><div class="pip"></div></div></div>
+            <div class="card-rarity">Проста</div>
+            <div class="cost-line"><span>Ціна</span><span class="cost-val">215 gp</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-gap"></div>
+      <div class="buy-row">
+        <div class="balance-chip">Рахунок команди: <span class="balance-val" id="balance">0</span> gp</div>
+        <button class="cancel-btn" onclick="cancelUpgrade()">Відмінити</button>
+        <button class="action-btn" id="equipBtn" onclick="doEquip()">Оснастити</button>
+      </div>
+    </div>
+
+    <!-- SHIP MODE -->
+    <div id="mode-ship" class="hidden">
+      <div class="upgrade-section">
+        <div class="section-header">Кораблі</div>
+        <div class="cards-row" id="ships">
+
+          <div class="upgrade-card ship-card" onclick="selectShip(this,{name:'Вітер Кортора',rarity:'Простий',price:1350,speed:1,image:'/assets/ships/WindOfCortor.png',cannon:{name:'Барс',rarity:'Проста',power:2,speedPenalty:1,fireRate:0},hull:{name:'Укріплене дерево',rarity:'Проста',defense:1}})">
+            <div class="ship-card-img"><img src="../../../assets/ships/WindOfCortor.png" onerror="this.parentElement.innerHTML='<span class=card-img-label>зображення корабля</span>'"></div>
+            <div class="ship-card-title">Вітер Кортора</div>
+            <div style="font-size:10px;color:#a89b87;margin:5px 0 3px;">Гармата · Барс</div>
+            <div class="stat-line"><span class="stat-label">Потужність</span><div class="stat-pips"><div class="pip g"></div><div class="pip g"></div><div class="pip"></div><div class="pip"></div></div></div>
+            <div class="stat-line-neg"><div class="stat-pips-neg"><div class="pip r"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div><span class="stat-label-neg">–Швидкостріл.</span></div>
+            <div style="font-size:10px;color:#a89b87;margin:6px 0 3px;">Корпус · Укріплене дерево</div>
+            <div class="stat-line"><span class="stat-label">Захист</span><div class="stat-pips"><div class="pip g"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></div>
+            <div style="font-size:10px;color:#a89b87;margin:6px 0 3px;">Швидкість корабля</div>
+            <div class="stat-line"><span class="stat-label">Швидкість</span><div class="stat-pips"><div class="pip a"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></div>
+            <div class="card-rarity">Простий</div>
+            <div class="cost-line"><span>Ціна</span><span class="cost-val big">1350 gp</span></div>
+          </div>
+
+          <div class="upgrade-card ship-card" onclick="selectShip(this,{name:'Корпус КРЕСТ',rarity:'Ентузіаст',price:1850,speed:2,image:'/assets/ships/KrestBranch.png',cannon:{name:'Манал',rarity:'Ентузіаст',power:2,speedPenalty:0,fireRate:1},hull:{name:'Метал тонкий',rarity:'Ентузіаст',defense:2}})">
+            <div class="ship-card-img"><img src="../../../assets/ships/KrestBranch.png" onerror="this.parentElement.innerHTML='<span class=card-img-label>зображення корабля</span>'"></div>
+            <div class="ship-card-title">Корпус КРЕСТ</div>
+            <div style="font-size:10px;color:#a89b87;margin:5px 0 3px;">Гармата · Манал</div>
+            <div class="stat-line"><span class="stat-label">Потужність</span><div class="stat-pips"><div class="pip g"></div><div class="pip g"></div><div class="pip"></div><div class="pip"></div></div></div>
+            <div class="stat-line"><span class="stat-label">Швидкостріл.</span><div class="stat-pips"><div class="pip a"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></div>
+            <div style="font-size:10px;color:#a89b87;margin:6px 0 3px;">Корпус · Метал тонкий</div>
+            <div class="stat-line"><span class="stat-label">Захист</span><div class="stat-pips"><div class="pip g"></div><div class="pip g"></div><div class="pip"></div><div class="pip"></div></div></div>
+            <div style="font-size:10px;color:#a89b87;margin:6px 0 3px;">Швидкість корабля</div>
+            <div class="stat-line"><span class="stat-label">Швидкість</span><div class="stat-pips"><div class="pip a"></div><div class="pip a"></div><div class="pip"></div><div class="pip"></div></div></div>
+            <div class="card-rarity">Ентузіаст</div>
+            <div class="cost-line"><span>Ціна</span><span class="cost-val big">1850 gp</span></div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="section-gap"></div>
+      <div class="buy-row">
+        <div class="balance-chip">Рахунок команди: <span class="balance-val" id="balance2">0</span> gp</div>
+        <button class="cancel-btn" onclick="cancelShip()">Відмінити</button>
+        <button class="action-btn" id="buyBtn" onclick="doBuyShip()">Придбати</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script type="module">
+// Idea: Baraniuk
+// Code: Claude (Anthropic AI Assistant)
+
+import { showBackButton, showAlert, getTelegramUser } from '../../telegram.js';
+import { supabase } from '../../supabase.js';
+
+const CAMPAIGN_ID = '39d3349e-8cc6-4bf1-b07a-a89bd45a0831';
+
+let selUpgrade = { cannons: null, hulls: null };
+let selShip = null;
+let currentUser = null;
+let hasPending = false;
+let crewBudget = 0;
+
+// ---- Init ----
+async function init() {
+  showBackButton();
+  currentUser = getTelegramUser();
+  await Promise.all([loadCurrentShip(), checkPending()]);
+}
+
+function updateBalanceUI() {
+  document.getElementById('balance').textContent = crewBudget;
+  document.getElementById('balance2').textContent = crewBudget;
+}
+
+async function loadCurrentShip() {
+  const { data, error } = await supabase
+    .from('ships')
+    .select('*')
+    .eq('campaign_id', CAMPAIGN_ID)
+    .single();
+
+  if (error || !data) {
+    console.log('⚠️ Корабель не знайдено:', error?.message);
+    document.getElementById('shipNameTag').textContent = 'Корабель не визначено';
+    crewBudget = 0;
+    updateBalanceUI();
+    return;
+  }
+
+  crewBudget = data.crew_budget ?? 0;
+  updateBalanceUI();
+
+  document.getElementById('shipNameTag').textContent = data.name || 'Діючий корабель';
+
+  if (data.image_url) {
+    document.getElementById('shipVisual').innerHTML =
+      `<img src="${data.image_url}" alt="${data.name}" style="width:100%;height:100%;object-fit:cover;opacity:.85">
+       <div class="ship-name-tag">${data.name || 'Діючий корабель'}</div>`;
+  }
+
+  const cc = document.getElementById('eq-cannon');
+  const hh = document.getElementById('eq-hull');
+
+  const cannonLabel = data.cannon_name || (data.cannons ? String(data.cannons) : null);
+  const hullLabel = data.hull_name || data.hull;
+
+  if (cannonLabel) {
+    cc.innerHTML = `<div class="equipped-card-type">Гармата</div>
+      <div class="equipped-card-name">${cannonLabel}</div>
+      <div class="equipped-card-rarity">Встановлено</div>`;
+  }
+  if (hullLabel) {
+    hh.innerHTML = `<div class="equipped-card-type">Корпус</div>
+      <div class="equipped-card-name">${hullLabel}</div>
+      <div class="equipped-card-rarity">Встановлено</div>`;
+  }
+}
+
+async function checkPending() {
+  if (!currentUser?.id) return;
+  const { data } = await supabase
+    .from('ship_actions')
+    .select('id')
+    .eq('player_id', String(currentUser.id))
+    .eq('status', 'pending')
+    .limit(1);
+
+  hasPending = data && data.length > 0;
+  document.getElementById('pendingBanner').classList.toggle('hidden', !hasPending);
+}
+
+async function submitAction(type, actionData) {
+  if (hasPending) { showAlert('У тебе вже є незакритий запит. Зачекай на відповідь DM.'); return; }
+  if (!currentUser?.id) { showAlert('Не вдалося визначити користувача'); return; }
+
+  const { error } = await supabase.from('ship_actions').insert({
+    campaign_id: CAMPAIGN_ID,
+    player_id: Number(currentUser.id),
+    action_type: type,
+    action_data: actionData,
+    status: 'pending'
+  });
+
+  if (error) {
+    console.log('❌ Помилка запиту:', error.message);
+    showAlert('Помилка надсилання запиту');
+    return;
+  }
+
+  console.log('✅ Запит надіслано DM:', type, actionData);
+  showAlert('✅ Запит надіслано DM на розгляд!');
+  hasPending = true;
+  document.getElementById('pendingBanner').classList.remove('hidden');
+  cancelUpgrade();
+  cancelShip();
+}
+
+// ---- Mode toggle ----
+window.setMode = function(mode) {
+  document.getElementById('mode-upgrade').classList.toggle('hidden', mode !== 'upgrade');
+  document.getElementById('mode-ship').classList.toggle('hidden', mode !== 'ship');
+  document.getElementById('btn-upgrade').classList.toggle('active', mode === 'upgrade');
+  document.getElementById('btn-ship').classList.toggle('active', mode === 'ship');
+  document.getElementById('shopSubtitle').textContent =
+    mode === 'upgrade' ? 'Оберіть модуль для оснащення' : 'Оберіть корабель для придбання';
+
+  const row = document.getElementById('equippedRow');
+  if (mode === 'ship') {
+    row.className = 'equipped-row cols-3';
+    renderShipSlots(selShip);
+  } else {
+    row.className = 'equipped-row cols-2';
+    renderUpgradeSlots();
+  }
+};
+
+// ---- Pip helpers ----
+function pips(n, cls) {
+  let h = '<div class="stat-pips">';
+  for (let i = 0; i < 4; i++) h += `<div class="pip${i < n ? ' ' + cls : ''}"></div>`;
+  return h + '</div>';
+}
+function pipsNeg(n) {
+  let h = '<div class="stat-pips-neg">';
+  for (let i = 0; i < 4; i++) h += `<div class="pip${i < n ? ' r' : ''}"></div>`;
+  return h + '</div>';
+}
+
+// ---- Upgrade mode ----
+window.selectUpgrade = function(card, group, data) {
+  const already = card.classList.contains('selected');
+  document.querySelectorAll('#' + group + ' .upgrade-card').forEach(c => c.classList.remove('selected'));
+  if (!already) { card.classList.add('selected'); selUpgrade[group] = data; }
+  else { selUpgrade[group] = null; }
+  renderUpgradeSlots();
+};
+
+function renderUpgradeSlots() {
+  const cc = document.getElementById('eq-cannon');
+  const hh = document.getElementById('eq-hull');
+  const c = selUpgrade.cannons, h = selUpgrade.hulls;
+
+  if (c) {
+    const fireRow = c.speedNeg > 0
+      ? `<div class="stat-line-neg">${pipsNeg(c.speedNeg)}<span class="stat-label-neg">–Швидкостріл.</span></div>`
+      : `<div class="stat-line"><span class="stat-label">Швидкостріл.</span>${pips(c.speed, 'a')}</div>`;
+    cc.innerHTML = `<div class="equipped-card-type">Гармата</div>
+      <div class="equipped-card-name">${c.name}</div>
+      <div class="stat-line"><span class="stat-label">Потужність</span>${pips(c.power, 'g')}</div>
+      ${fireRow}
+      <div class="equipped-card-rarity">${c.rarity} · ${c.price} gp</div>`;
+  } else {
+    cc.innerHTML = '<div class="equipped-card-type">Гармата</div><div class="equipped-card-empty">— не встановлено —</div>';
+  }
+
+  if (h) {
+    hh.innerHTML = `<div class="equipped-card-type">Корпус</div>
+      <div class="equipped-card-name">${h.name}</div>
+      <div class="stat-line"><span class="stat-label">Захист</span>${pips(h.defense, 'g')}</div>
+      <div class="equipped-card-rarity">${h.rarity} · ${h.price} gp</div>`;
+  } else {
+    hh.innerHTML = '<div class="equipped-card-type">Корпус</div><div class="equipped-card-empty">— не встановлено —</div>';
+  }
+}
+
+window.cancelUpgrade = function() {
+  document.querySelectorAll('#cannons .upgrade-card, #hulls .upgrade-card').forEach(c => c.classList.remove('selected'));
+  selUpgrade.cannons = null;
+  selUpgrade.hulls = null;
+  renderUpgradeSlots();
+};
+
+window.doEquip = async function() {
+  const c = selUpgrade.cannons, h = selUpgrade.hulls;
+  if (!c && !h) { showAlert('Оберіть хоча б один модуль'); return; }
+  const total = (c ? c.price : 0) + (h ? h.price : 0);
+  await submitAction('upgrade', { cannon: c || null, hull: h || null, total_cost: total });
+};
+
+// ---- Ship mode ----
+window.selectShip = function(card, data) {
+  const already = card.classList.contains('selected');
+  document.querySelectorAll('#ships .upgrade-card').forEach(c => c.classList.remove('selected'));
+  if (!already) { card.classList.add('selected'); selShip = data; }
+  else { selShip = null; }
+  renderShipSlots(selShip);
+};
+
+function renderShipSlots(s) {
+  const cc = document.getElementById('eq-cannon');
+  const hh = document.getElementById('eq-hull');
+  const row = document.getElementById('equippedRow');
+
+  let sp = document.getElementById('eq-speed');
+  if (!sp) {
+    sp = document.createElement('div');
+    sp.className = 'equipped-card';
+    sp.id = 'eq-speed';
+    row.appendChild(sp);
+  }
+
+  if (!s) {
+    cc.innerHTML = '<div class="equipped-card-type">Гармата</div><div class="equipped-card-empty">— —</div>';
+    hh.innerHTML = '<div class="equipped-card-type">Корпус</div><div class="equipped-card-empty">— —</div>';
+    sp.innerHTML = '<div class="equipped-card-type">Швидкість</div><div class="equipped-card-empty">— —</div>';
+    return;
+  }
+
+  const c = s.cannon, h = s.hull;
+  const fireRow = c.speedPenalty > 0
+    ? `<div class="stat-line-neg">${pipsNeg(c.speedPenalty)}<span class="stat-label-neg">–Швидкостріл.</span></div>`
+    : `<div class="stat-line"><span class="stat-label">Швидкостріл.</span>${pips(c.fireRate || 0, 'a')}</div>`;
+
+  cc.innerHTML = `<div class="equipped-card-type">Гармата</div>
+    <div class="equipped-card-name">${c.name}</div>
+    <div class="stat-line"><span class="stat-label">Потужність</span>${pips(c.power, 'g')}</div>
+    ${fireRow}
+    <div class="equipped-card-rarity">${c.rarity}</div>`;
+
+  hh.innerHTML = `<div class="equipped-card-type">Корпус</div>
+    <div class="equipped-card-name">${h.name}</div>
+    <div class="stat-line"><span class="stat-label">Захист</span>${pips(h.defense, 'g')}</div>
+    <div class="equipped-card-rarity">${h.rarity}</div>`;
+
+  sp.innerHTML = `<div class="equipped-card-type">Корабель</div>
+    <div class="equipped-ship-name">${s.name}</div>
+    <div class="stat-line"><span class="stat-label">Швидкість</span>${pips(s.speed, 'a')}</div>
+    <div class="equipped-card-rarity">${s.rarity}</div>
+    <div class="equipped-price">${s.price} gp</div>`;
+}
+
+window.cancelShip = function() {
+  document.querySelectorAll('#ships .upgrade-card').forEach(c => c.classList.remove('selected'));
+  selShip = null;
+  renderShipSlots(null);
+};
+
+window.doBuyShip = async function() {
+  if (!selShip) { showAlert('Оберіть корабель'); return; }
+  await submitAction('buy_ship', { name: selShip.name, price: selShip.price, rarity: selShip.rarity });
+};
+
+init();
+</script>
+</body>
+</html>
+
+<!-- Idea: Baraniuk -->
+<!-- Code: Claude (Anthropic AI Assistant) -->

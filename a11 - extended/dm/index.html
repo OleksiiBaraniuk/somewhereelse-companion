@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DM Panel — Adventurer's Companion</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="../shared/styles.css">
+    <style>
+        .dm-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-dark));
+            color: var(--bg-primary);
+            font-size: 0.7em;
+            font-weight: bold;
+            padding: 3px 10px;
+            border-radius: var(--radius-sm);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-left: var(--spacing-sm);
+        }
+
+        .campaign-meta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-sm);
+            flex-wrap: wrap;
+            margin-top: var(--spacing-sm);
+        }
+
+        .meta-chip {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border-secondary);
+            border-radius: var(--radius-sm);
+            padding: 4px 10px;
+            font-size: 0.8em;
+            color: var(--text-secondary);
+        }
+
+        .meta-chip span {
+            color: var(--accent-gold);
+            font-weight: bold;
+        }
+
+        /* ── STATS GRID ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border-secondary);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            text-align: center;
+        }
+
+        .stat-card .number {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--accent-gold);
+            line-height: 1;
+        }
+
+        .stat-card .label {
+            font-size: 0.75em;
+            color: var(--text-muted);
+            margin-top: var(--spacing-xs);
+        }
+
+        /* ── ACTION CARDS ── */
+        .action-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border-secondary);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            transition: border-color 0.2s;
+        }
+
+        .action-card.pending  { border-left: 4px solid var(--warning); }
+        .action-card.approved { border-left: 4px solid var(--success); }
+        .action-card.rejected { border-left: 4px solid var(--error); }
+
+        .action-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--spacing-sm);
+            gap: var(--spacing-sm);
+        }
+
+        .action-who {
+            font-weight: bold;
+            color: var(--accent-gold);
+            font-size: 0.95em;
+        }
+
+        .action-time {
+            font-size: 0.75em;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .action-type {
+            display: inline-block;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border-secondary);
+            border-radius: var(--radius-sm);
+            padding: 2px 8px;
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .action-data {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            background: rgba(0,0,0,0.2);
+            border-radius: var(--radius-sm);
+            padding: var(--spacing-sm);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .dm-note-input {
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .dm-note-input input {
+            font-size: 0.85em;
+            padding: var(--spacing-sm) var(--spacing-md);
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-sm);
+        }
+
+        .btn-approve {
+            background: linear-gradient(135deg, #1a6b2a, #27ae60);
+            border: 2px solid var(--success);
+            color: white;
+            font-size: 0.85em;
+            padding: var(--spacing-sm);
+        }
+
+        .btn-reject {
+            background: linear-gradient(135deg, #6b1a1a, #c0392b);
+            border: 2px solid var(--error);
+            color: white;
+            font-size: 0.85em;
+            padding: var(--spacing-sm);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: var(--radius-sm);
+            font-size: 0.75em;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .status-badge.pending  { background: rgba(251,191,36,0.15);  color: var(--warning); border: 1px solid var(--warning); }
+        .status-badge.approved { background: rgba(74,222,128,0.15);  color: var(--success); border: 1px solid var(--success); }
+        .status-badge.rejected { background: rgba(239,68,68,0.15);   color: var(--error);   border: 1px solid var(--error); }
+
+        .dm-note-resolved {
+            font-size: 0.8em;
+            color: var(--text-muted);
+            font-style: italic;
+            margin-top: var(--spacing-xs);
+        }
+
+        /* ── PLAYERS LIST ── */
+        .player-row {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--bg-card);
+            border: 1px solid var(--border-secondary);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .player-avatar {
+            font-size: 1.8em;
+            width: 40px;
+            text-align: center;
+        }
+
+        .player-info { flex: 1; }
+        .player-name { font-weight: bold; color: var(--accent-gold); font-size: 0.95em; }
+        .player-username { font-size: 0.8em; color: var(--text-muted); }
+
+        /* ── REALTIME DOT ── */
+        .realtime-dot {
+            display: inline-block;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 6px var(--success);
+            margin-right: 6px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* ── ACCESS DENIED ── */
+        #accessDenied {
+            display: none;
+        }
+
+        .denied-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 70vh;
+            text-align: center;
+            gap: var(--spacing-md);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-xl);
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .empty-state .icon { font-size: 3em; margin-bottom: var(--spacing-sm); }
+    </style>
+</head>
+<body>
+
+<!-- ACCESS DENIED -->
+<div id="accessDenied">
+    <div class="container">
+        <div class="denied-page">
+            <div style="font-size:4em">🚫</div>
+            <h2>Access Denied</h2>
+            <p class="text-muted">You are not a Dungeon Master of any active campaign.</p>
+            <button class="btn-secondary" onclick="window.location.href='../index.html'">← Back to Hub</button>
+        </div>
+    </div>
+</div>
+
+<!-- DM PANEL -->
+<div id="dmPanel">
+
+    <header class="app-header">
+        <div class="header-content">
+            <span class="header-icon">📜</span>
+            <div>
+                <h1>DM Panel <span class="dm-badge">Dungeon Master</span></h1>
+                <p class="subtitle" id="campaignName">Loading campaign…</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- CAMPAIGN META -->
+        <div class="campaign-meta section">
+            <div class="meta-chip">Status: <span id="campaignStatus">—</span></div>
+            <div class="meta-chip">Type: <span id="campaignType">—</span></div>
+            <div class="meta-chip"><span class="realtime-dot"></span>Live</div>
+        </div>
+
+        <!-- CREW BUDGET -->
+        <section class="section">
+            <h3 class="section-title">💰 Crew Budget</h3>
+            <div style="background:var(--bg-card);border:2px solid var(--border-secondary);border-radius:var(--radius-md);padding:var(--spacing-md);">
+                <p style="font-size:0.85em;color:var(--text-muted);margin:0 0 var(--spacing-sm);">
+                    Встановіть бюджет GP доступний команді для покупок у Ship Management.
+                </p>
+                <div style="display:flex;align-items:center;gap:var(--spacing-sm);flex-wrap:wrap;">
+                    <div style="flex:1;min-width:120px;">
+                        <label style="font-size:0.75em;color:var(--text-muted);display:block;margin-bottom:4px;">Поточний бюджет</label>
+                        <div style="font-size:1.8em;font-weight:bold;color:var(--accent-gold);" id="currentBudgetDisplay">—</div>
+                        <div style="font-size:0.75em;color:var(--text-muted);">GP</div>
+                    </div>
+                    <div style="flex:2;min-width:180px;">
+                        <label style="font-size:0.75em;color:var(--text-muted);display:block;margin-bottom:4px;">Новий бюджет (GP)</label>
+                        <input type="number" id="budgetInput" min="0" placeholder="напр. 500"
+                            style="width:100%;box-sizing:border-box;font-size:1em;padding:var(--spacing-sm) var(--spacing-md);">
+                    </div>
+                    <button class="btn-primary" id="setBudgetBtn" onclick="window.setBudget()"
+                        style="align-self:flex-end;padding:var(--spacing-sm) var(--spacing-md);font-size:0.9em;white-space:nowrap;">
+                        💾 Встановити
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- STATS -->
+        <section class="section">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="number" id="statPending">—</div>
+                    <div class="label">Pending</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="statPlayers">—</div>
+                    <div class="label">Players</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="statResolved">—</div>
+                    <div class="label">Resolved</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PENDING ACTIONS -->
+        <section class="section">
+            <h3 class="section-title">⏳ Pending Requests</h3>
+            <div id="pendingList">
+                <div class="empty-state">
+                    <div class="icon">✅</div>
+                    <p>No pending requests</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- PLAYERS -->
+        <section class="section">
+            <h3 class="section-title">👥 Players</h3>
+            <div id="playersList">
+                <div class="empty-state"><p>Loading…</p></div>
+            </div>
+        </section>
+
+        <!-- ACTIVITY LOG -->
+        <section class="section">
+            <h3 class="section-title">📋 Recent Activity</h3>
+            <div id="activityLog">
+                <div class="empty-state">
+                    <div class="icon">📭</div>
+                    <p>No activity yet</p>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+import { initTelegram, getTelegramUser, showBackButton, isDevelopmentMode } from '../shared/telegram.js'
+
+const SUPABASE_URL = 'https://xohzvemfeqqcijcipcwj.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvaHp2ZW1mZXFxY2lqY2lwY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjAwMTUsImV4cCI6MjA4ODgzNjAxNX0.3wxU293d0bTZPzgNrywoOdCTdK-KyDSh0WSoQVYP63A'
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+// ── STATE ──
+let currentUser = null
+let campaign = null
+let realtimeChannel = null
+
+// ── INIT ──
+async function init() {
+    console.log('📜 DM Panel initializing…')
+    initTelegram()
+    showBackButton(() => window.location.href = '../index.html')
+
+    currentUser = getTelegramUser()
+    if (!currentUser) {
+        showAccessDenied()
+        return
+    }
+
+    console.log('👤 DM check for user:', currentUser.id)
+
+    // Перевірити чи є кампанія де цей юзер — DM
+    const { data: campaigns } = await supabase
+        .from('campaigns')
+        .select('*')
+        .eq('dm_id', currentUser.id)
+        .eq('status', 'active')
+        .limit(1)
+
+    if (!campaigns || campaigns.length === 0) {
+        showAccessDenied()
+        return
+    }
+
+    campaign = campaigns[0]
+    console.log('✅ DM access granted:', campaign.name)
+
+    // Показати панель
+    document.getElementById('accessDenied').style.display = 'none'
+    document.getElementById('dmPanel').style.display = 'block'
+
+    renderCampaignInfo()
+    await Promise.all([loadPendingActions(), loadPlayers(), loadActivityLog(), loadCrewBudget()])
+    subscribeToActions()
+}
+
+// ── CAMPAIGN INFO ──
+function renderCampaignInfo() {
+    document.getElementById('campaignName').textContent = campaign.name
+    document.getElementById('campaignStatus').textContent = campaign.status
+    document.getElementById('campaignType').textContent = campaign.campaign_type || 'General'
+}
+
+// ── PENDING ACTIONS ──
+async function loadPendingActions() {
+    const { data: actions } = await supabase
+        .from('ship_actions')
+        .select('*, players:player_id(username, first_name)')
+        .eq('campaign_id', campaign.id)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: true })
+
+    renderPendingActions(actions || [])
+    document.getElementById('statPending').textContent = (actions || []).length
+}
+
+function renderPendingActions(actions) {
+    const container = document.getElementById('pendingList')
+    if (!actions.length) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>No pending requests</p></div>`
+        return
+    }
+
+    container.innerHTML = actions.map(a => {
+        const playerName = a.players?.first_name || a.players?.username || `#${a.player_id}`
+        const time = new Date(a.created_at).toLocaleString('uk-UA', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })
+        const dataStr = Object.entries(a.action_data || {}).map(([k,v]) => `${k}: ${v}`).join(' · ') || '—'
+
+        return `
+        <div class="action-card pending" id="action-${a.id}">
+            <div class="action-header">
+                <div class="action-who">⚔️ ${playerName}</div>
+                <div class="action-time">${time}</div>
+            </div>
+            <div class="action-type">${a.action_type}</div>
+            <div class="action-data">${dataStr}</div>
+            <div class="dm-note-input">
+                <input type="text" id="note-${a.id}" placeholder="DM note (optional)…">
+            </div>
+            <div class="action-buttons">
+                <button class="btn-approve" onclick="window.resolveAction('${a.id}', 'approved')">✅ Approve</button>
+                <button class="btn-reject"  onclick="window.resolveAction('${a.id}', 'rejected')">❌ Reject</button>
+            </div>
+        </div>`
+    }).join('')
+}
+
+// ── RESOLVE ACTION ──
+window.resolveAction = async function(actionId, status) {
+    const note = document.getElementById(`note-${actionId}`)?.value || null
+
+    const { error } = await supabase
+        .from('ship_actions')
+        .update({ status, dm_note: note, resolved_at: new Date().toISOString() })
+        .eq('id', actionId)
+
+    if (error) {
+        console.error('❌ Error resolving action:', error)
+        return
+    }
+
+    console.log(`✅ Action ${actionId} → ${status}`)
+    await Promise.all([loadPendingActions(), loadActivityLog()])
+}
+
+// ── PLAYERS ──
+async function loadPlayers() {
+    const { data: players } = await supabase
+        .from('players')
+        .select('telegram_id, username, first_name')
+        .neq('telegram_id', currentUser.id) // не показувати самого DM
+
+    const container = document.getElementById('playersList')
+    const list = players || []
+
+    document.getElementById('statPlayers').textContent = list.length
+
+    if (!list.length) {
+        container.innerHTML = `<div class="empty-state"><p>No players yet</p></div>`
+        return
+    }
+
+    container.innerHTML = list.map(p => `
+        <div class="player-row">
+            <div class="player-avatar">🧙</div>
+            <div class="player-info">
+                <div class="player-name">${p.first_name || 'Unknown'}</div>
+                <div class="player-username">@${p.username || '—'}</div>
+            </div>
+        </div>
+    `).join('')
+}
+
+// ── ACTIVITY LOG ──
+async function loadActivityLog() {
+    const { data: actions } = await supabase
+        .from('ship_actions')
+        .select('*, players:player_id(username, first_name)')
+        .eq('campaign_id', campaign.id)
+        .in('status', ['approved', 'rejected'])
+        .order('resolved_at', { ascending: false })
+        .limit(10)
+
+    const container = document.getElementById('activityLog')
+    const list = actions || []
+
+    document.getElementById('statResolved').textContent = list.length
+
+    if (!list.length) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>No activity yet</p></div>`
+        return
+    }
+
+    container.innerHTML = list.map(a => {
+        const playerName = a.players?.first_name || `#${a.player_id}`
+        const time = new Date(a.resolved_at).toLocaleString('uk-UA', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })
+        return `
+        <div class="action-card ${a.status}">
+            <div class="action-header">
+                <div class="action-who">⚔️ ${playerName}</div>
+                <div class="action-time">${time}</div>
+            </div>
+            <div class="action-type">${a.action_type}</div>
+            <span class="status-badge ${a.status}">${a.status.toUpperCase()}</span>
+            ${a.dm_note ? `<div class="dm-note-resolved">📝 ${a.dm_note}</div>` : ''}
+        </div>`
+    }).join('')
+}
+
+// ── CREW BUDGET ──
+async function loadCrewBudget() {
+    const { data, error } = await supabase
+        .from('ships')
+        .select('crew_budget')
+        .eq('campaign_id', campaign.id)
+        .single()
+
+    const budget = (!error && data) ? (data.crew_budget ?? 0) : 0
+    document.getElementById('currentBudgetDisplay').textContent = budget
+    document.getElementById('budgetInput').value = budget
+}
+
+window.setBudget = async function() {
+    const val = parseInt(document.getElementById('budgetInput').value)
+    if (isNaN(val) || val < 0) {
+        alert('Введіть коректне число')
+        return
+    }
+
+    const btn = document.getElementById('setBudgetBtn')
+    btn.disabled = true
+    btn.textContent = '⏳ Збереження…'
+
+    // Check if ship row exists, then update or insert
+    const { data: existing } = await supabase
+        .from('ships')
+        .select('id')
+        .eq('campaign_id', campaign.id)
+        .single()
+
+    let error
+    if (existing) {
+        ({ error } = await supabase
+            .from('ships')
+            .update({ crew_budget: val })
+            .eq('campaign_id', campaign.id))
+    } else {
+        ({ error } = await supabase
+            .from('ships')
+            .insert({
+                campaign_id: campaign.id,
+                name: 'Корабель команди',
+                cannons: 0,
+                crew_current: 0, crew_max: 0,
+                cargo_current: 0, cargo_max: 0,
+                hp_current: 100, hp_max: 100,
+                speed: 1,
+                crew_budget: val
+            }))
+    }
+
+    btn.disabled = false
+    btn.textContent = '💾 Встановити'
+
+    if (error) {
+        console.error('❌ setBudget error:', error)
+        alert('Помилка збереження бюджету')
+        return
+    }
+
+    document.getElementById('currentBudgetDisplay').textContent = val
+    console.log('✅ Crew budget set to', val)
+}
+
+// ── REALTIME ──
+function subscribeToActions() {
+    realtimeChannel = supabase
+        .channel('dm_ship_actions')
+        .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'ship_actions',
+            filter: `campaign_id=eq.${campaign.id}`
+        }, () => {
+            console.log('🔔 ship_actions changed — reloading…')
+            loadPendingActions()
+            loadActivityLog()
+        })
+        .subscribe()
+
+    console.log('✅ Realtime subscribed to ship_actions')
+}
+
+// ── ACCESS DENIED ──
+function showAccessDenied() {
+    document.getElementById('accessDenied').style.display = 'block'
+    document.getElementById('dmPanel').style.display = 'none'
+    console.warn('🚫 Access denied — not a DM')
+}
+
+init()
+</script>
+
+</body>
+</html>
+
+<!-- ============================================================
+Credits
+Idea: Baraniuk
+Code: Claude (Anthropic AI Assistant)
+============================================================ -->

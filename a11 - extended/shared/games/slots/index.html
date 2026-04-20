@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tavern Slots</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@700&display=swap');
+
+        :root {
+            --bg:       #0a0608;
+            --bg2:      #150d10;
+            --bg3:      #1e1218;
+            --card:     #281520;
+            --border:   #6b2a45;
+            --gold:     #d4af37;
+            --gold2:    #f0c84a;
+            --gold-dim: #7a5a14;
+            --red:      #c0392b;
+            --red2:     #ff4444;
+            --green:    #27ae60;
+            --green2:   #2ecc71;
+            --purple:   #8e44ad;
+            --text:     #f0e0d0;
+            --text2:    #b88a7a;
+            --text3:    #7a4a3a;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+        html, body {
+            width:100%; min-height:100vh;
+            background: var(--bg);
+            font-family: 'Cinzel', Georgia, serif;
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        body {
+            background-image:
+                radial-gradient(ellipse 70% 40% at 50% 0%, rgba(180,30,80,0.08), transparent),
+                radial-gradient(ellipse 50% 50% at 20% 100%, rgba(100,10,40,0.12), transparent),
+                radial-gradient(ellipse 50% 50% at 80% 100%, rgba(60,0,80,0.1), transparent);
+        }
+
+        /* ── LAYOUT ── */
+        .app {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 16px 14px 32px;
+            gap: 14px;
+        }
+
+        /* ── HEADER ── */
+        .casino-header {
+            text-align: center;
+            width: 100%;
+        }
+
+        .casino-title {
+            font-family: 'Cinzel Decorative', serif;
+            font-size: clamp(1.4em, 6vw, 2em);
+            color: var(--gold);
+            text-shadow: 0 0 30px rgba(212,175,55,0.5), 0 0 60px rgba(212,175,55,0.2), 2px 2px 0 #000;
+            letter-spacing: 3px;
+        }
+
+        .casino-subtitle {
+            font-size: 0.7em;
+            color: var(--text3);
+            letter-spacing: 4px;
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+
+        /* ── DIVIDER ── */
+        .divider {
+            width: 100%; max-width: 420px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), var(--gold-dim), var(--border), transparent);
+            position: relative;
+        }
+        .divider::before {
+            content: '✦';
+            position: absolute; left:50%; top:50%;
+            transform: translate(-50%,-50%);
+            background: var(--bg); color: var(--gold-dim);
+            padding: 0 8px; font-size:12px;
+        }
+
+        /* ── BALANCE ── */
+        .balance-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%; max-width: 420px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 16px;
+        }
+        .balance-label { font-size: 0.6em; letter-spacing: 3px; color: var(--text3); }
+        .balance-value { font-size: 1.3em; font-weight: 700; color: var(--gold); }
+        .balance-icon { font-size: 1.4em; }
+
+        /* ── SLOT MACHINE ── */
+        .machine {
+            width: 100%; max-width: 420px;
+            background: linear-gradient(160deg, #1e0f18, #2a1020, #1a0a14);
+            border: 3px solid var(--border);
+            border-radius: 20px;
+            padding: 20px 16px;
+            box-shadow:
+                0 0 40px rgba(180,30,80,0.15),
+                0 8px 32px rgba(0,0,0,0.6),
+                inset 0 1px 0 rgba(255,255,255,0.04);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Декоративні кути */
+        .machine::before, .machine::after {
+            content: '◆';
+            position: absolute;
+            color: var(--gold-dim);
+            font-size: 18px;
+            opacity: 0.5;
+        }
+        .machine::before { top:12px; left:16px; }
+        .machine::after  { top:12px; right:16px; }
+
+        /* ── REELS WINDOW ── */
+        .reels-window {
+            background: #080408;
+            border: 2px solid #3a1828;
+            border-radius: 12px;
+            padding: 8px;
+            margin-bottom: 16px;
+            box-shadow: inset 0 4px 20px rgba(0,0,0,0.8);
+            position: relative;
+        }
+
+        /* Лінія виграшу */
+        .payline {
+            position: absolute;
+            left: 8px; right: 8px;
+            top: 50%; transform: translateY(-50%);
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(212,175,55,0.4), rgba(212,175,55,0.7), rgba(212,175,55,0.4), transparent);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .reels-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        /* ── SINGLE REEL ── */
+        .reel {
+            background: linear-gradient(180deg, #120810 0%, #1a0e14 50%, #120810 100%);
+            border: 1px solid #2a1020;
+            border-radius: 8px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .reel-strip {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: none;
+        }
+
+        .reel-symbol {
+            width: 100%;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(2.4em, 8vw, 3em);
+            flex-shrink: 0;
+            user-select: none;
+        }
+
+        /* Затемнення зверху/знизу котушки */
+        .reel::before, .reel::after {
+            content: '';
+            position: absolute;
+            left:0; right:0;
+            height: 30px;
+            z-index: 2;
+            pointer-events: none;
+        }
+        .reel::before { top:0;    background: linear-gradient(180deg, #120810, transparent); }
+        .reel::after  { bottom:0; background: linear-gradient(0deg,   #120810, transparent); }
+
+        /* Анімація прокрутки */
+        @keyframes reelSpin {
+            0%   { transform: translateY(0); }
+            100% { transform: translateY(-100%); }
+        }
+
+        .reel.spinning .reel-strip {
+            animation: reelSpin 0.08s linear infinite;
+        }
+
+        /* Підсвічування при виграші */
+        .reel.win-flash {
+            animation: winFlash 0.5s ease 3;
+        }
+        @keyframes winFlash {
+            0%,100% { box-shadow: none; }
+            50%     { box-shadow: 0 0 20px var(--gold), inset 0 0 10px rgba(212,175,55,0.2); }
+        }
+        .reel.lose-flash {
+            animation: loseFlash 0.4s ease 2;
+        }
+        @keyframes loseFlash {
+            0%,100% { box-shadow: none; }
+            50%     { box-shadow: 0 0 20px var(--red2), inset 0 0 10px rgba(255,68,68,0.2); }
+        }
+
+        /* ── RESULT OVERLAY на котушці ── */
+        .result-badge {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(0,0,0,0.85);
+            border-radius: 8px;
+            padding: 4px 10px;
+            font-size: 0.65em;
+            font-weight: 600;
+            letter-spacing: 1px;
+            z-index: 5;
+            white-space: nowrap;
+            transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .result-badge.show { transform: translate(-50%, -50%) scale(1); }
+        .result-badge.win  { color: var(--green2); border: 1px solid var(--green); }
+        .result-badge.lose { color: var(--red2);   border: 1px solid var(--red); }
+
+        /* ── BET SECTION ── */
+        .bet-section {
+            width: 100%;
+        }
+
+        .bet-label-row {
+            font-size: 0.6em;
+            letter-spacing: 3px;
+            color: var(--text3);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .bet-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .bet-btn {
+            font-family: 'Cinzel', serif;
+            font-size: 0.9em;
+            font-weight: 600;
+            padding: 12px 6px;
+            background: linear-gradient(145deg, #1e0f18, #2e1828);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            color: var(--text2);
+            cursor: pointer;
+            transition: all 0.2s;
+            touch-action: manipulation;
+            text-align: center;
+        }
+        .bet-btn:active { transform: scale(0.96); }
+        .bet-btn.selected {
+            border-color: var(--gold);
+            color: var(--gold);
+            background: linear-gradient(145deg, #2e1a08, #4a2e10);
+            box-shadow: 0 0 16px rgba(212,175,55,0.2);
+        }
+        .bet-btn .bet-num { font-size: 1.2em; display: block; }
+        .bet-btn .bet-gp  { font-size: 0.6em; letter-spacing: 2px; color: var(--text3); margin-top: 2px; }
+
+        /* ── SPIN BUTTON ── */
+        .spin-btn {
+            width: 100%;
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 1.1em;
+            font-weight: 700;
+            letter-spacing: 3px;
+            padding: 18px;
+            background: linear-gradient(145deg, #8b1a3a, #b02050, #8b1a3a);
+            border: 2px solid #d4608a;
+            border-radius: 14px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+            touch-action: manipulation;
+            box-shadow: 0 0 30px rgba(180,30,80,0.3), 0 6px 20px rgba(0,0,0,0.5);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+        .spin-btn:active:not(:disabled) { transform: scale(0.97); }
+        .spin-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .spin-btn:hover:not(:disabled) {
+            box-shadow: 0 0 40px rgba(180,30,80,0.5), 0 6px 20px rgba(0,0,0,0.5);
+        }
+
+        /* ── STATUS ── */
+        .status-box {
+            width: 100%; max-width: 420px;
+            min-height: 52px;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 16px;
+            text-align: center;
+            font-size: 0.85em;
+            color: var(--text2);
+            transition: all 0.3s;
+        }
+        .status-box.win  { border-color: var(--green); color: var(--green2); font-weight: 600; }
+        .status-box.lose { border-color: var(--red);   color: var(--red2);   font-weight: 600; }
+        .status-box.warn { border-color: var(--gold);  color: var(--gold);   font-weight: 600; }
+
+        /* ── PAYTABLE ── */
+        .paytable {
+            width: 100%; max-width: 420px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid #2a1020;
+            border-radius: 12px;
+            padding: 14px 16px;
+        }
+        .paytable-title {
+            font-size: 0.6em;
+            letter-spacing: 3px;
+            color: var(--text3);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .paytable-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(106,42,69,0.2);
+            font-size: 0.78em;
+        }
+        .paytable-row:last-child { border-bottom: none; }
+        .pt-sym  { font-size: 1.3em; width: 28px; }
+        .pt-name { color: var(--text2); flex: 1; padding: 0 8px; }
+        .pt-pay  { color: var(--gold); font-weight: 600; text-align: right; }
+        .pt-pay.danger { color: var(--red2); }
+
+        /* ── GAME OVER OVERLAY ── */
+        .gameover-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 100;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 30px;
+        }
+        .gameover-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+        .gameover-icon { font-size: 5em; animation: iconPop 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+        @keyframes iconPop { from { transform: scale(0); } to { transform: scale(1); } }
+
+        .gameover-title {
+            font-family: 'Cinzel Decorative', serif;
+            font-size: clamp(1.4em, 6vw, 2em);
+            text-align: center;
+        }
+        .gameover-title.win  { color: var(--gold2); text-shadow: 0 0 30px rgba(240,200,74,0.5); }
+        .gameover-title.lose { color: var(--red2);  text-shadow: 0 0 30px rgba(255,68,68,0.4); }
+
+        .gameover-amount {
+            font-size: 1.3em;
+            color: var(--text2);
+            text-align: center;
+        }
+        .gameover-amount strong { color: var(--gold); font-size: 1.3em; }
+
+        .go-btn {
+            font-family: 'Cinzel', serif;
+            font-size: 0.9em;
+            font-weight: 600;
+            letter-spacing: 2px;
+            padding: 14px 32px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            touch-action: manipulation;
+            width: 100%; max-width: 320px;
+        }
+        .go-btn.primary {
+            background: linear-gradient(145deg, #5a3a0a, #8b6014);
+            border: 2px solid var(--gold);
+            color: var(--gold);
+            box-shadow: 0 0 20px rgba(212,175,55,0.2);
+        }
+        .go-btn.secondary {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text2);
+        }
+        .go-btn:active { transform: scale(0.97); }
+    </style>
+</head>
+<body>
+
+<div class="app">
+
+    <!-- HEADER -->
+    <div class="casino-header">
+        <div class="casino-title">🎰 Tavern Slots</div>
+        <div class="casino-subtitle">Fortune favours the bold</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- BALANCE -->
+    <div class="balance-bar" style="max-width:420px">
+        <div>
+            <div class="balance-label">YOUR GOLD</div>
+            <div class="balance-value" id="balanceVal">500 GP</div>
+        </div>
+        <div class="balance-icon">💰</div>
+        <div style="text-align:right">
+            <div class="balance-label">TOTAL WON</div>
+            <div class="balance-value" id="totalWon" style="color:var(--green2)">0 GP</div>
+        </div>
+    </div>
+
+    <!-- SLOT MACHINE -->
+    <div class="machine" style="max-width:420px">
+        <div class="reels-window">
+            <div class="payline"></div>
+            <div class="reels-row" id="reelsRow">
+                <!-- 3 reels injected by JS -->
+            </div>
+        </div>
+
+        <!-- BET -->
+        <div class="bet-section">
+            <div class="bet-label-row">— SELECT BET —</div>
+            <div class="bet-options">
+                <button class="bet-btn selected" data-bet="50"  onclick="selectBet(50,this)">
+                    <span class="bet-num">50</span>
+                    <span class="bet-gp">GP</span>
+                </button>
+                <button class="bet-btn" data-bet="100" onclick="selectBet(100,this)">
+                    <span class="bet-num">100</span>
+                    <span class="bet-gp">GP</span>
+                </button>
+                <button class="bet-btn" data-bet="150" onclick="selectBet(150,this)">
+                    <span class="bet-num">150</span>
+                    <span class="bet-gp">GP</span>
+                </button>
+            </div>
+        </div>
+
+        <div style="margin-top:14px">
+            <button class="spin-btn" id="spinBtn" onclick="spin()">✦ SPIN ✦</button>
+        </div>
+    </div>
+
+    <!-- STATUS -->
+    <div class="status-box" id="statusBox">Choose your bet and spin!</div>
+
+    <!-- PAYTABLE -->
+    <div class="paytable">
+        <div class="paytable-title">— PAY TABLE —</div>
+        <div class="paytable-row">
+            <span class="pt-sym">🍒</span>
+            <span class="pt-name">Cherry — 2 match</span>
+            <span class="pt-pay">+10% · ×2</span>
+        </div>
+        <div class="paytable-row">
+            <span class="pt-sym">🍒</span>
+            <span class="pt-name">Cherry — 3 match</span>
+            <span class="pt-pay">+20% · ×2</span>
+        </div>
+        <div class="paytable-row">
+            <span class="pt-sym">🍋</span>
+            <span class="pt-name">Lemon — 2 match</span>
+            <span class="pt-pay">+30% · ×2</span>
+        </div>
+        <div class="paytable-row">
+            <span class="pt-sym">🍋</span>
+            <span class="pt-name">Lemon — 3 match</span>
+            <span class="pt-pay">+60% · ×2</span>
+        </div>
+        <div class="paytable-row">
+            <span class="pt-sym">🍓</span>
+            <span class="pt-name">Strawberry — 2 match</span>
+            <span class="pt-pay">+40% · ×2</span>
+        </div>
+        <div class="paytable-row">
+            <span class="pt-sym">🍓</span>
+            <span class="pt-name">Strawberry — 3 match</span>
+            <span class="pt-pay">+80% · ×2</span>
+        </div>
+        <div class="paytable-row">
+            <span class="pt-sym">🔥</span>
+            <span class="pt-name">Fire — 2 match</span>
+            <span class="pt-pay">+80% · ×2</span>
+        </div>
+        <div class="paytable-row">
+            <span class="pt-sym">🔥</span>
+            <span class="pt-name">Fire — 3 match</span>
+            <span class="pt-pay">+160% · ×2</span>
+        </div>
+        <div class="paytable-row">
+            <span class="pt-sym">✝️</span>
+            <span class="pt-name">Cross — any 1</span>
+            <span class="pt-pay danger">LOSE ALL BET</span>
+        </div>
+    </div>
+
+</div>
+
+<!-- GAME OVER OVERLAY -->
+<div class="gameover-overlay" id="gameoverOverlay">
+    <div class="gameover-icon" id="goIcon">💀</div>
+    <div class="gameover-title" id="goTitle">Ruined!</div>
+    <div class="gameover-amount" id="goAmount">You have no gold left.</div>
+    <button class="go-btn primary" onclick="refillAndClose()">🪙 Start Fresh (500 GP)</button>
+    <button class="go-btn secondary" onclick="window.history.back()">← Leave Tavern</button>
+</div>
+
+<script>
+// ══════════════════════════════════════
+// TELEGRAM
+// ══════════════════════════════════════
+const tg = window.Telegram?.WebApp;
+if (tg) {
+    tg.ready(); tg.expand();
+    tg.setHeaderColor('#0a0608');
+    tg.setBackgroundColor('#0a0608');
+    tg.BackButton.show();
+    tg.BackButton.onClick(() => window.history.back());
+}
+const haptic = (t) => tg?.HapticFeedback?.impactOccurred(t);
+const hapticNote = (t) => tg?.HapticFeedback?.notificationOccurred(t);
+
+// ══════════════════════════════════════
+// SYMBOLS
+// ══════════════════════════════════════
+const SYMBOLS = [
+    { id: 'cherry',     emoji: '🍒', pct: 5,  weight: 35 },
+    { id: 'lemon',      emoji: '🍋', pct: 15, weight: 28 },
+    { id: 'strawberry', emoji: '🍓', pct: 20, weight: 22 },
+    { id: 'fire',       emoji: '🔥', pct: 40, weight: 10 },
+    { id: 'cross',      emoji: '✝️', pct: 0,  weight: 5  },
+];
+
+// Weighted random symbol pick
+function randomSymbol() {
+    const total = SYMBOLS.reduce((s, sym) => s + sym.weight, 0);
+    let r = Math.random() * total;
+    for (const sym of SYMBOLS) {
+        r -= sym.weight;
+        if (r <= 0) return sym;
+    }
+    return SYMBOLS[0];
+}
+
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+// Shared wallet key — синхронізується з main menu
+const GOLD_KEY = 'companion-gold';
+let balance    = parseInt(localStorage.getItem(GOLD_KEY) || '0');
+let totalWon   = parseInt(localStorage.getItem('slots-won') || '0');
+let currentBet = 50;
+let spinning   = false;
+
+// ══════════════════════════════════════
+// BUILD REELS
+// ══════════════════════════════════════
+function buildReels() {
+    const row = document.getElementById('reelsRow');
+    row.innerHTML = '';
+    for (let i = 0; i < 3; i++) {
+        const reel = document.createElement('div');
+        reel.className = 'reel';
+        reel.id = `reel${i}`;
+
+        const strip = document.createElement('div');
+        strip.className = 'reel-strip';
+        strip.id = `strip${i}`;
+
+        // Fill strip with random symbols for scroll effect
+        for (let j = 0; j < 8; j++) {
+            const s = document.createElement('div');
+            s.className = 'reel-symbol';
+            s.textContent = SYMBOLS[j % SYMBOLS.length].emoji;
+            strip.appendChild(s);
+        }
+        reel.appendChild(strip);
+        row.appendChild(reel);
+    }
+}
+
+// ══════════════════════════════════════
+// SELECT BET
+// ══════════════════════════════════════
+function selectBet(amount, el) {
+    if (spinning) return;
+    currentBet = amount;
+    document.querySelectorAll('.bet-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    haptic('light');
+    setStatus(`Bet: ${amount} GP — Ready to spin!`, '');
+}
+
+// ══════════════════════════════════════
+// SPIN
+// ══════════════════════════════════════
+async function spin() {
+    if (spinning) return;
+
+    if (balance < currentBet) {
+        setStatus('❌ Not enough gold!', 'lose');
+        hapticNote('error');
+        return;
+    }
+
+    spinning = true;
+    haptic('medium');
+    document.getElementById('spinBtn').disabled = true;
+    document.querySelectorAll('.bet-btn').forEach(b => b.disabled = true);
+
+    // Deduct bet immediately
+    balance -= currentBet;
+    saveBalance();
+    updateUI();
+    setStatus('🎰 Spinning…', '');
+
+    // Pick final results
+    const results = [randomSymbol(), randomSymbol(), randomSymbol()];
+
+    // Spin animation staggered
+    for (let i = 0; i < 3; i++) {
+        const reel = document.getElementById(`reel${i}`);
+        const strip = document.getElementById(`strip${i}`);
+
+        // Update strip symbols (for visual variety)
+        const syms = strip.querySelectorAll('.reel-symbol');
+        syms.forEach(s => {
+            s.textContent = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)].emoji;
+        });
+        // Last visible = final result
+        syms[syms.length - 1].textContent = results[i].emoji;
+
+        reel.classList.add('spinning');
+    }
+
+    // Stop reels one by one
+    const stopDelays = [900, 1300, 1700];
+    for (let i = 0; i < 3; i++) {
+        await sleep(stopDelays[i] - (i > 0 ? stopDelays[i-1] : 0));
+        const reel  = document.getElementById(`reel${i}`);
+        const strip = document.getElementById(`strip${i}`);
+        reel.classList.remove('spinning');
+        // Show final symbol only
+        strip.innerHTML = '';
+        const sym = document.createElement('div');
+        sym.className = 'reel-symbol';
+        sym.textContent = results[i].emoji;
+        strip.appendChild(sym);
+        haptic('light');
+    }
+
+    await sleep(300);
+    resolveResult(results);
+}
+
+// ══════════════════════════════════════
+// RESOLVE
+// ══════════════════════════════════════
+function resolveResult(results) {
+    const hasCross = results.some(s => s.id === 'cross');
+
+    if (hasCross) {
+        // Cross = lose all
+        hapticNote('error');
+
+        results.forEach((s, i) => {
+            const reel = document.getElementById(`reel${i}`);
+            reel.classList.add('lose-flash');
+        });
+
+        const lost = currentBet;
+        setStatus(`✝️ The Cross! You lose your entire bet of ${lost} GP!`, 'lose');
+
+        // balance already deducted — nothing more to do
+        saveBalance();
+        updateUI();
+
+        setTimeout(() => {
+            spinning = false;
+            document.getElementById('spinBtn').disabled = false;
+            document.querySelectorAll('.bet-btn').forEach(b => b.disabled = false);
+
+            if (balance <= 0) showGameOver();
+        }, 1800);
+        return;
+    }
+
+    // Count matches
+    const counts = {};
+    results.forEach(s => { counts[s.id] = (counts[s.id] || 0) + 1; });
+
+    let bestPct   = 0;
+    let bestSym   = null;
+    let bestCount = 0;
+
+    for (const [id, cnt] of Object.entries(counts)) {
+        if (cnt >= 2) {
+            const sym = SYMBOLS.find(s => s.id === id);
+            const pct = sym.pct * cnt * (cnt === 3 ? 2 : 1); // ×2 multiplier for triple
+            if (pct > bestPct) {
+                bestPct   = pct;
+                bestSym   = sym;
+                bestCount = cnt;
+            }
+        }
+    }
+
+    if (bestSym) {
+        // Win!
+        const winAmount = Math.round(currentBet * bestPct / 100);
+        balance += currentBet + winAmount; // return bet + profit
+        totalWon += winAmount;
+        saveBalance();
+        updateUI();
+
+        hapticNote('success');
+        results.forEach((s, i) => {
+            const reel = document.getElementById(`reel${i}`);
+            if (s.id === bestSym.id) reel.classList.add('win-flash');
+        });
+
+        const matchWord = bestCount === 3 ? 'TRIPLE' : 'DOUBLE';
+        setStatus(
+            `${bestSym.emoji} ${matchWord} ${bestSym.emoji} — +${bestPct}% — You win ${winAmount} GP!`,
+            'win'
+        );
+    } else {
+        // No match
+        haptic('heavy');
+        setStatus(`No match this time. Lost ${currentBet} GP.`, 'lose');
+        saveBalance();
+        updateUI();
+    }
+
+    setTimeout(() => {
+        spinning = false;
+        document.getElementById('spinBtn').disabled = false;
+        document.querySelectorAll('.bet-btn').forEach(b => b.disabled = false);
+
+        if (balance <= 0) showGameOver();
+    }, 2000);
+}
+
+// ══════════════════════════════════════
+// GAME OVER
+// ══════════════════════════════════════
+function showGameOver() {
+    hapticNote('error');
+    document.getElementById('goIcon').textContent   = '💀';
+    document.getElementById('goTitle').className    = 'gameover-title lose';
+    document.getElementById('goTitle').textContent  = 'Ruined!';
+    document.getElementById('goAmount').innerHTML   = `You're out of gold.<br>Total won this session: <strong>${totalWon} GP</strong>`;
+    document.getElementById('gameoverOverlay').classList.add('show');
+}
+
+function refillAndClose() {
+    // No gold — send back to main menu to refill
+    window.history.back();
+}
+
+// ══════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════
+function setStatus(msg, cls) {
+    const el = document.getElementById('statusBox');
+    el.textContent = msg;
+    el.className = 'status-box ' + (cls || '');
+}
+
+function updateUI() {
+    document.getElementById('balanceVal').textContent = balance + ' GP';
+    document.getElementById('totalWon').textContent   = totalWon + ' GP';
+}
+
+function saveBalance() {
+    localStorage.setItem(GOLD_KEY, balance);
+    localStorage.setItem('slots-won', totalWon);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+buildReels();
+updateUI();
+if (balance <= 0) {
+    setStatus('⚠️ No gold! Go to main menu → 💰 Gold to set your balance.', 'warn');
+    document.getElementById('spinBtn').disabled = true;
+} else {
+    setStatus(`💰 You have ${balance} GP — Choose your bet and spin!`, '');
+}
+</script>
+</body>
+</html>
+
+<!-- ============================================================
+Credits
+Idea: Baraniuk
+Code: Claude (Anthropic AI Assistant)
+============================================================ -->

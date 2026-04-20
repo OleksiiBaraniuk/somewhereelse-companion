@@ -70,6 +70,9 @@ async function init() {
         // Завантажити та показати ігри і фічі
         await renderGames()
         await renderFeatures()
+
+        // Оновити бейдж гаманця
+        updateWalletBadge()
     } catch (error) {
         console.error('Initialization error:', error)
         showAlert('Error loading data. Please check your connection.')
@@ -84,7 +87,7 @@ async function renderGames() {
     try {
         console.log('🎮 Loading games...')
         const games = await loadAllGames()
-        const container = document.querySelector('.horizontal-scroll')
+        const container = document.querySelector('#gamesContainer')
         
         if (!container) {
             console.warn('Games container not found')
@@ -299,22 +302,78 @@ window.openDiceRolls = function() {
 
 window.openMap = function() {
     hapticFeedback('light')
-    showAlert('🗺️ Map feature coming soon!')
+    window.location.href = 'map/index.html'
 }
 
 window.openInventory = function() {
     hapticFeedback('light')
-    showAlert('🎒 Inventory coming soon!')
-}
-
-window.openGold = function() {
-    hapticFeedback('light')
-    showAlert('💰 Gold tracker coming soon!')
+    window.location.href = 'inventory/index.html'
 }
 
 window.openNotes = function() {
     hapticFeedback('light')
-    showAlert('📝 Notes coming soon!')
+    window.location.href = 'notes/index.html'
+}
+
+// ================================================
+// WALLET
+// ================================================
+
+const WALLET_KEY = 'companion_wallet'
+
+function loadWallet() {
+    const currentGold = parseInt(localStorage.getItem('companion-gold') || '0')
+    const stored = localStorage.getItem(WALLET_KEY)
+    if (stored) {
+        const wallet = JSON.parse(stored)
+        // Синхронізуємо золото якщо гра змінила companion-gold
+        if (wallet.gold !== currentGold) {
+            wallet.gold = currentGold
+            localStorage.setItem(WALLET_KEY, JSON.stringify(wallet))
+        }
+        return wallet
+    }
+    return { gold: currentGold, silver: 0, copper: 0 }
+}
+
+function updateWalletBadge() {
+    const wallet = loadWallet()
+    const badge = document.getElementById('walletBadge')
+    if (!badge) return
+
+    if (wallet.gold > 0 || wallet.silver > 0 || wallet.copper > 0) {
+        badge.textContent = `${wallet.gold} GP`
+        badge.classList.remove('hidden')
+    } else {
+        badge.classList.add('hidden')
+    }
+}
+
+window.openGold = function() {
+    hapticFeedback('light')
+    const wallet = loadWallet()
+    document.getElementById('walletGold').value = wallet.gold
+    document.getElementById('walletSilver').value = wallet.silver
+    document.getElementById('walletCopper').value = wallet.copper
+    document.getElementById('walletModal').classList.remove('hidden')
+}
+
+window.closeWallet = function() {
+    document.getElementById('walletModal').classList.add('hidden')
+}
+
+window.saveWallet = function() {
+    const wallet = {
+        gold: parseInt(document.getElementById('walletGold').value) || 0,
+        silver: parseInt(document.getElementById('walletSilver').value) || 0,
+        copper: parseInt(document.getElementById('walletCopper').value) || 0
+    }
+    localStorage.setItem(WALLET_KEY, JSON.stringify(wallet))
+    localStorage.setItem('companion-gold', wallet.gold) // сумісність з іграми
+    updateWalletBadge()
+    closeWallet()
+    hapticFeedback('success')
+    console.log('✅ Wallet saved:', wallet)
 }
 
 // ================================================

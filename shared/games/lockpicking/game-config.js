@@ -12,12 +12,12 @@ export default {
   difficulty: 'medium',
   tags: ['skill', 'dexterity', 'stealth', 'minigame'],
   
-  // Мета-дані для фільтрації
+  // Metadata
   skillCheck: 'dexterity',
   recommendedLevel: 1,
   avgPlayTime: '2-3 minutes',
   
-  // Опціонально: правила гри
+  // Rules
   rules: [
     'Rotate lockpick to find the sweet spot',
     'Click to attempt unlocking',

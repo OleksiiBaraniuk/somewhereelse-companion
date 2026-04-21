@@ -1,42 +1,42 @@
 /**
- * Feature Loader - Динамічне завантаження особливостей кампаній
- * Автоматично знаходить і завантажує конфігурації всіх фіч
+ * Feature Loader - Dynamic loading of campaign features
+ * Automatically finds and loads configurations for all features
  */
 
-// Список всіх доступних фіч (просто ID папок)
+// List of all available features (folder IDs)
 const AVAILABLE_FEATURES = [
   'ship-management'
 ]
 
 /**
- * Завантажити конфігурації всіх фіч
- * @returns {Promise<Array>} Масив об'єктів з конфігураціями фіч
+ * Load configurations for all features
+ * @returns {Promise<Array>} Array of feature config objects
  */
 export async function loadAllFeatures() {
   const features = []
-  
+
   for (const featureId of AVAILABLE_FEATURES) {
     try {
-      // Динамічний імпорт конфігу фічі
+      // Dynamic import of feature config
       const module = await import(`./features/${featureId}/feature-config.js`)
       const config = module.default
-      
-      // Додати шлях до фічі
+
+      // Add feature path
       config.path = `/shared/features/${featureId}/index.html`
-      
+
       features.push(config)
     } catch (error) {
       console.warn(`⚠️ Failed to load feature: ${featureId}`, error)
     }
   }
-  
+
   return features
 }
 
 /**
- * Завантажити конфіг конкретної фічі
- * @param {string} featureId - ID фічі
- * @returns {Promise<Object>} Конфіг фічі
+ * Load config for a specific feature
+ * @param {string} featureId - Feature ID
+ * @returns {Promise<Object>} Feature config
  */
 export async function loadFeature(featureId) {
   try {
@@ -51,34 +51,34 @@ export async function loadFeature(featureId) {
 }
 
 /**
- * Фільтрувати фічі по типу кампанії
- * @param {Array} features - Масив фіч
- * @param {string} campaignType - Тип кампанії
- * @returns {Array} Відфільтровані фічі
+ * Filter features by campaign type
+ * @param {Array} features - Array of features
+ * @param {string} campaignType - Campaign type
+ * @returns {Array} Filtered features
  */
 export function filterFeaturesByCampaign(features, campaignType) {
-  return features.filter(feature => 
-    !feature.campaignTypes || 
+  return features.filter(feature =>
+    !feature.campaignTypes ||
     feature.campaignTypes.includes(campaignType) ||
     feature.campaignTypes.includes('all')
   )
 }
 
 /**
- * Отримати фічі з Supabase по campaign_id
- * @param {number} campaignId - ID кампанії
- * @returns {Promise<Array>} Масив назв фіч для кампанії
+ * Get features from Supabase by campaign_id
+ * @param {number} campaignId - Campaign ID
+ * @returns {Promise<Array>} Array of feature names for campaign
  */
 export async function getCampaignFeaturesFromDB(campaignId) {
-  // TODO: Інтеграція з Supabase
+  // TODO: Supabase integration
   // const { data } = await supabase
   //   .from('campaigns')
   //   .select('features')
   //   .eq('id', campaignId)
   //   .single()
   // return data?.features || []
-  
-  // Поки що повертаємо всі доступні
+
+  // Return all available for now
   return AVAILABLE_FEATURES
 }
 

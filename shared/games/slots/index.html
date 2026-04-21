@@ -121,7 +121,7 @@
             overflow: hidden;
         }
 
-        /* Декоративні кути */
+        /* Decorative corners */
         .machine::before, .machine::after {
             content: '◆';
             position: absolute;
@@ -143,7 +143,7 @@
             position: relative;
         }
 
-        /* Лінія виграшу */
+        /* Payline */
         .payline {
             position: absolute;
             left: 8px; right: 8px;
@@ -191,7 +191,7 @@
             user-select: none;
         }
 
-        /* Затемнення зверху/знизу котушки */
+        /* Top/bottom reel fade */
         .reel::before, .reel::after {
             content: '';
             position: absolute;
@@ -203,7 +203,7 @@
         .reel::before { top:0;    background: linear-gradient(180deg, #120810, transparent); }
         .reel::after  { bottom:0; background: linear-gradient(0deg,   #120810, transparent); }
 
-        /* Анімація прокрутки */
+        /* Scroll animation */
         @keyframes reelSpin {
             0%   { transform: translateY(0); }
             100% { transform: translateY(-100%); }
@@ -213,7 +213,7 @@
             animation: reelSpin 0.08s linear infinite;
         }
 
-        /* Підсвічування при виграші */
+        /* Win flash highlight */
         .reel.win-flash {
             animation: winFlash 0.5s ease 3;
         }
@@ -229,7 +229,7 @@
             50%     { box-shadow: 0 0 20px var(--red2), inset 0 0 10px rgba(255,68,68,0.2); }
         }
 
-        /* ── RESULT OVERLAY на котушці ── */
+        /* ── RESULT OVERLAY on reel ── */
         .result-badge {
             position: absolute;
             top: 50%; left: 50%;
@@ -589,7 +589,7 @@ function randomSymbol() {
 // ══════════════════════════════════════
 // STATE
 // ══════════════════════════════════════
-// Shared wallet key — синхронізується з main menu
+// Shared wallet key — synced with main menu
 const GOLD_KEY = 'companion-gold';
 let balance    = parseInt(localStorage.getItem(GOLD_KEY) || '0');
 let totalWon   = parseInt(localStorage.getItem('slots-won') || '0');

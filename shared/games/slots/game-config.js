@@ -12,12 +12,12 @@ export default {
   difficulty: 'easy',
   tags: ['luck', 'gambling', 'gold', 'minigame'],
   
-  // Мета-дані
+  // Metadata
   skillCheck: 'charisma',  // Luck-based, charisma for bonus
   recommendedLevel: 1,
   avgPlayTime: '2-5 minutes',
   
-  // Правила
+  // Rules
   rules: [
     'Bet gold to spin',
     'Match 3 symbols to win',
@@ -25,7 +25,7 @@ export default {
     'Jackpot on triple 7s'
   ],
   
-  // Додаткова інфа для слотів
+  // Slots-specific config
   minBet: 10,
   maxBet: 100,
   jackpotMultiplier: 100

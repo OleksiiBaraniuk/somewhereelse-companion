@@ -12,12 +12,12 @@ export default {
   difficulty: 'easy',
   tags: ['reaction', 'speed', 'reflex', 'minigame'],
   
-  // Мета-дані
+  // Metadata
   skillCheck: 'dexterity',
   recommendedLevel: 1,
   avgPlayTime: '1-2 minutes',
   
-  // Правила
+  // Rules
   rules: [
     'Press the correct button as fast as possible',
     'Each round gets faster',

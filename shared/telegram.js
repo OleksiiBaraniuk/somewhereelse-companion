@@ -3,7 +3,7 @@
  * SomewhereElse Companion
  */
 
-// Глобальний об'єкт Telegram Web App
+// Global Telegram Web App object
 export const tg = window.Telegram?.WebApp
 
 // ================================================
@@ -11,27 +11,27 @@ export const tg = window.Telegram?.WebApp
 // ================================================
 
 /**
- * Ініціалізувати Telegram Web App
+ * Initialize Telegram Web App
  */
 export function initTelegram() {
   if (!tg) {
     console.warn('⚠️ Not running in Telegram Web App environment')
     return null
   }
-  
-  // Готовність до роботи
+
+  // Signal readiness
   tg.ready()
-  
-  // Розгорнути на весь екран
+
+  // Expand to full screen
   tg.expand()
-  
-  // Встановити кольори теми
+
+  // Set theme colors
   tg.setHeaderColor('#1a0f0a')
   tg.setBackgroundColor('#1a0f0a')
-  
-  // Увімкнути закриття при свайпі вниз
+
+  // Enable swipe-down close confirmation
   tg.enableClosingConfirmation()
-  
+
   console.log('✅ Telegram Web App initialized')
   return tg
 }
@@ -41,22 +41,22 @@ export function initTelegram() {
 // ================================================
 
 /**
- * Отримати дані користувача Telegram
- * Спробує отримати з Telegram WebApp, якщо не вдасться - з URL параметрів
+ * Get Telegram user data.
+ * Tries Telegram WebApp first, falls back to URL params.
  */
 export function getTelegramUser() {
-  // Спочатку спробувати отримати з Telegram WebApp
+  // First try to get from Telegram WebApp
   if (tg) {
     const user = tg.initDataUnsafe?.user
     if (user) {
       return user
     }
   }
-  
-  // Якщо не в Telegram або немає даних - спробувати з URL параметрів
+
+  // If not in Telegram or no data - try URL params
   const params = new URLSearchParams(window.location.search)
   const userId = params.get('tg_user_id')
-  
+
   if (userId) {
     return {
       id: parseInt(userId),
@@ -66,8 +66,8 @@ export function getTelegramUser() {
       language_code: params.get('tg_language_code') || 'uk'
     }
   }
-  
-  // Режим розробки - повертаємо тестового користувача
+
+  // Development mode - return test user
   if (isDevelopmentMode()) {
     return {
       id: 123456789,
@@ -77,21 +77,21 @@ export function getTelegramUser() {
       language_code: 'uk'
     }
   }
-  
+
   return null
 }
 
 /**
- * Перевірити чи це режим розробки
+ * Check if running in development mode
  */
 export function isDevelopmentMode() {
-  return window.location.hostname === 'localhost' || 
+  return window.location.hostname === 'localhost' ||
          window.location.hostname === '127.0.0.1' ||
          window.location.search.includes('dev=true')
 }
 
 /**
- * Отримати ID користувача
+ * Get user ID
  */
 export function getUserId() {
   const user = getTelegramUser()
@@ -99,12 +99,12 @@ export function getUserId() {
 }
 
 /**
- * Отримати повне ім'я
+ * Get full name
  */
 export function getUserFullName() {
   const user = getTelegramUser()
   if (!user) return 'Guest'
-  
+
   return [user.first_name, user.last_name].filter(Boolean).join(' ')
 }
 
@@ -113,7 +113,7 @@ export function getUserFullName() {
 // ================================================
 
 /**
- * Показати Alert
+ * Show alert
  */
 export function showAlert(message) {
   if (tg) {
@@ -124,7 +124,7 @@ export function showAlert(message) {
 }
 
 /**
- * Показати Confirm
+ * Show confirm
  */
 export function showConfirm(message, callback) {
   if (tg) {
@@ -136,13 +136,13 @@ export function showConfirm(message, callback) {
 }
 
 /**
- * Показати Popup
+ * Show popup
  */
 export function showPopup(params, callback) {
   if (tg?.showPopup) {
     tg.showPopup(params, callback)
   } else {
-    // Fallback для браузера
+    // Browser fallback
     const message = params.message || params.title
     const result = confirm(message)
     callback(result ? 'ok' : 'cancel')
@@ -154,49 +154,49 @@ export function showPopup(params, callback) {
 // ================================================
 
 /**
- * Вібрація (легка)
+ * Light haptic
  */
 export function hapticLight() {
   tg?.HapticFeedback?.impactOccurred('light')
 }
 
 /**
- * Вібрація (середня)
+ * Medium haptic
  */
 export function hapticMedium() {
   tg?.HapticFeedback?.impactOccurred('medium')
 }
 
 /**
- * Вібрація (важка)
+ * Heavy haptic
  */
 export function hapticHeavy() {
   tg?.HapticFeedback?.impactOccurred('heavy')
 }
 
 /**
- * Сповіщення (успіх)
+ * Success notification
  */
 export function hapticSuccess() {
   tg?.HapticFeedback?.notificationOccurred('success')
 }
 
 /**
- * Сповіщення (помилка)
+ * Error notification
  */
 export function hapticError() {
   tg?.HapticFeedback?.notificationOccurred('error')
 }
 
 /**
- * Сповіщення (попередження)
+ * Warning notification
  */
 export function hapticWarning() {
   tg?.HapticFeedback?.notificationOccurred('warning')
 }
 
 /**
- * Вібрація за типом
+ * Haptic feedback by type
  */
 export function hapticFeedback(type = 'medium') {
   const feedbackMap = {
@@ -207,7 +207,7 @@ export function hapticFeedback(type = 'medium') {
     'error': hapticError,
     'warning': hapticWarning
   }
-  
+
   const feedback = feedbackMap[type] || hapticMedium
   feedback()
 }
@@ -217,13 +217,13 @@ export function hapticFeedback(type = 'medium') {
 // ================================================
 
 /**
- * Показати кнопку "Назад"
+ * Show back button
  */
 export function showBackButton(callback) {
   if (!tg) return
-  
+
   tg.BackButton.show()
-  
+
   if (callback) {
     tg.BackButton.onClick(callback)
   } else {
@@ -232,7 +232,7 @@ export function showBackButton(callback) {
 }
 
 /**
- * Сховати кнопку "Назад"
+ * Hide back button
  */
 export function hideBackButton() {
   tg?.BackButton.hide()
@@ -243,35 +243,35 @@ export function hideBackButton() {
 // ================================================
 
 /**
- * Показати головну кнопку
+ * Show main button
  */
 export function showMainButton(text, callback) {
   if (!tg) return
-  
+
   tg.MainButton.setText(text)
   tg.MainButton.show()
-  
+
   if (callback) {
     tg.MainButton.onClick(callback)
   }
 }
 
 /**
- * Сховати головну кнопку
+ * Hide main button
  */
 export function hideMainButton() {
   tg?.MainButton.hide()
 }
 
 /**
- * Показати прогрес на кнопці
+ * Show progress on main button
  */
 export function showMainButtonProgress() {
   tg?.MainButton.showProgress()
 }
 
 /**
- * Сховати прогрес на кнопці
+ * Hide progress on main button
  */
 export function hideMainButtonProgress() {
   tg?.MainButton.hideProgress()
@@ -282,21 +282,21 @@ export function hideMainButtonProgress() {
 // ================================================
 
 /**
- * Отримати тему Telegram
+ * Get Telegram theme
  */
 export function getTheme() {
   return tg?.colorScheme || 'dark'
 }
 
 /**
- * Отримати колір теми
+ * Get theme color
  */
 export function getThemeColor(colorKey) {
   return tg?.themeParams?.[colorKey] || null
 }
 
 /**
- * Чи темна тема?
+ * Check if dark theme
  */
 export function isDarkTheme() {
   return getTheme() === 'dark'
@@ -307,40 +307,40 @@ export function isDarkTheme() {
 // ================================================
 
 /**
- * Отримати висоту viewport
+ * Get viewport height
  */
 export function getViewportHeight() {
   return tg?.viewportHeight || window.innerHeight
 }
 
 /**
- * Отримати стабільну висоту (без клавіатури)
+ * Get stable viewport height (without keyboard)
  */
 export function getViewportStableHeight() {
   return tg?.viewportStableHeight || window.innerHeight
 }
 
 /**
- * Чи розгорнуто на весь екран?
+ * Check if expanded to full screen
  */
 export function isExpanded() {
   return tg?.isExpanded || false
 }
 
 // ================================================
-// CLOUD STORAGE (для зберігання налаштувань)
+// CLOUD STORAGE (for storing settings)
 // ================================================
 
 /**
- * Зберегти дані в Telegram Cloud Storage
+ * Save data to Telegram Cloud Storage
  */
 export async function saveToCloud(key, value) {
   if (!tg?.CloudStorage) {
-    // Fallback на localStorage
+    // Fallback to localStorage
     localStorage.setItem(key, JSON.stringify(value))
     return
   }
-  
+
   return new Promise((resolve, reject) => {
     tg.CloudStorage.setItem(key, JSON.stringify(value), (error, result) => {
       if (error) {
@@ -353,15 +353,15 @@ export async function saveToCloud(key, value) {
 }
 
 /**
- * Отримати дані з Telegram Cloud Storage
+ * Get data from Telegram Cloud Storage
  */
 export async function getFromCloud(key) {
   if (!tg?.CloudStorage) {
-    // Fallback на localStorage
+    // Fallback to localStorage
     const value = localStorage.getItem(key)
     return value ? JSON.parse(value) : null
   }
-  
+
   return new Promise((resolve, reject) => {
     tg.CloudStorage.getItem(key, (error, result) => {
       if (error) {
@@ -374,14 +374,14 @@ export async function getFromCloud(key) {
 }
 
 /**
- * Видалити дані з Cloud Storage
+ * Remove data from Cloud Storage
  */
 export async function removeFromCloud(key) {
   if (!tg?.CloudStorage) {
     localStorage.removeItem(key)
     return
   }
-  
+
   return new Promise((resolve, reject) => {
     tg.CloudStorage.removeItem(key, (error, result) => {
       if (error) {
@@ -398,7 +398,7 @@ export async function removeFromCloud(key) {
 // ================================================
 
 /**
- * Відкрити посилання
+ * Open link
  */
 export function openLink(url) {
   if (tg) {
@@ -409,7 +409,7 @@ export function openLink(url) {
 }
 
 /**
- * Відкрити Telegram посилання
+ * Open Telegram link
  */
 export function openTelegramLink(url) {
   if (tg) {
@@ -424,35 +424,35 @@ export function openTelegramLink(url) {
 // ================================================
 
 /**
- * Закрити Web App
+ * Close Web App
  */
 export function close() {
   tg?.close()
 }
 
 /**
- * Отримати Platform
+ * Get platform
  */
 export function getPlatform() {
   return tg?.platform || 'unknown'
 }
 
 /**
- * Отримати версію Telegram
+ * Get Telegram version
  */
 export function getTelegramVersion() {
   return tg?.version || 'unknown'
 }
 
 /**
- * Чи підтримується функція
+ * Check if feature is supported
  */
 export function isFeatureSupported(feature) {
   return tg?.isVersionAtLeast?.(feature) || false
 }
 
 /**
- * Логування в Development mode
+ * Log in development mode only
  */
 export function devLog(...args) {
   if (isDevelopmentMode()) {
@@ -464,7 +464,7 @@ export function devLog(...args) {
 // INIT ON LOAD
 // ================================================
 
-// Автоматична ініціалізація при завантаженні модуля
+// Auto-initialize when module loads
 if (tg) {
   initTelegram()
   devLog('Telegram WebApp Info:', {

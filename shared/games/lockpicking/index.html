@@ -14,7 +14,7 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* Реєструємо CSS змінні для анімації */
+        /* Register CSS animation variables */
         @property --hint-center {
             syntax: '<angle>';
             inherits: false;
@@ -281,7 +281,7 @@
             height: 280px;
         }
 
-        /* Маркери підказки навколо замка */
+        /* Hint markers around the lock */
         .hint-ring {
             position: absolute;
             top: 50%;
@@ -337,7 +337,7 @@
             }
         }
 
-        /* Зовнішнє кільце замка (етап 2) */
+        /* Outer lock ring (stage 2) */
         .lock-outer-ring {
             position: absolute;
             top: 50%;
@@ -357,7 +357,7 @@
             opacity: 0.5;
         }
 
-        /* Внутрішнє кільце замка (етап 1) */
+        /* Inner lock ring (stage 1) */
         .lock-inner-ring {
             position: absolute;
             top: 50%;
@@ -373,7 +373,7 @@
             z-index: 3;
         }
 
-        /* Центральний циліндр */
+        /* Central cylinder */
         .lock-core {
             position: absolute;
             top: 50%;
@@ -413,7 +413,7 @@
             border-top: 6px solid #0a0a0a;
         }
 
-        /* Відмичка всередині */
+        /* Lockpick inside */
         .lockpick {
             position: absolute;
             top: 50%;
@@ -474,7 +474,7 @@
             }
         }
 
-        /* Анімації обертання кілець */
+        /* Ring rotation animations */
         .lock-inner-ring.turning,
         .lock-outer-ring.turning {
             animation: tryTurn 0.4s ease;
@@ -912,33 +912,33 @@
                 numberOfRings = Math.min(12, baseRings + increase);
             }
 
-            // Обчислюємо ширину зони для визначення кольору
+            // Calculate zone width to determine color
             const baseHintWidth = 5;
             const modifierBonus = sleightOfHandModifier * 0.5;
             const hintWidth = Math.max(3, Math.min(15, baseHintWidth + modifierBonus));
 
-            // Коригуємо кількість кілець залежно від кольору зони
+            // Adjust ring count based on zone color
             let colorAdjustment = 0;
             let colorName = '';
 
             if (hintWidth >= 10) {
-                colorAdjustment = -1; // Зелений: -1 кільце
-                colorName = 'Зелена зона';
+                colorAdjustment = -1; // Green: -1 ring
+                colorName = 'Green zone';
             } else if (hintWidth >= 6) {
-                colorAdjustment = +1; // Жовтий: +1 кільце
-                colorName = 'Жовта зона';
+                colorAdjustment = +1; // Yellow: +1 ring
+                colorName = 'Yellow zone';
             } else {
-                colorAdjustment = +3; // Червоний: +3 кільця
-                colorName = 'Червона зона';
+                colorAdjustment = +3; // Red: +3 rings
+                colorName = 'Red zone';
             }
 
             numberOfRings = Math.max(2, Math.min(12, numberOfRings + colorAdjustment));
 
-            // Оновлюємо інфо про кільця
+            // Update ring info
             const ringsInfo = document.getElementById('ringsInfo');
-            ringsInfo.innerHTML = `Кількість кілець: <strong>${numberOfRings}</strong> (${colorName})`;
+            ringsInfo.innerHTML = `Rings to open: <strong>${numberOfRings}</strong> (${colorName})`;
 
-            // Міняємо колір залежно від складності
+            // Change color based on difficulty
             if (numberOfRings <= 4) {
                 ringsInfo.className = 'rings-info';
                 ringsInfo.style.background = 'rgba(74, 222, 128, 0.1)';
@@ -956,7 +956,7 @@
                 ringsInfo.style.color = '#fbbf24';
             }
 
-            // Оновлюємо кількість відмичок
+            // Update lockpick count
             totalLockpicks = parseInt(document.getElementById('lockpickCount').value) || 5;
         }
 
@@ -965,18 +965,18 @@
                 tg.HapticFeedback.impactOccurred('medium');
             }
 
-            // Приховуємо екран налаштування
+            // Hide settings screen
             setupScreen.classList.add('hidden');
             gameContainer.classList.add('active');
 
-            // Ініціалізуємо гру з вибраними налаштуваннями
+            // Initialize game with selected settings
             initGame();
         }
 
-        // === ФУНКЦІЇ ГРИ ===
+        // === GAME FUNCTIONS ===
 
         function initGame() {
-            // Створюємо етапи (кільця) на основі налаштувань
+            // Create stages (rings) based on settings
             stages = [];
 
             for (let i = 0; i < numberOfRings; i++) {
@@ -992,13 +992,13 @@
             isLocked = true;
             lockpicksLeft = totalLockpicks;
 
-            // Оновлюємо UI
+            // Update UI
             updateLockpicks();
             updateStageIndicator();
             updateHintRing();
-            updateStatus(`Етап 1/${numberOfRings}: Відкрийте кільце`);
+            updateStatus(`Stage 1/${numberOfRings}: Open the ring`);
 
-            // Скидаємо анімації
+            // Reset animations
             lockInnerRing.classList.remove('turning', 'success', 'stage-complete');
             lockOuterRing.classList.remove('turning', 'success', 'stage-complete');
             lockpick.classList.remove('broken');
@@ -1010,7 +1010,7 @@
             const stageContainer = document.querySelector('.stage-indicator');
             stageContainer.innerHTML = '';
 
-            // Створюємо індикатори для всіх етапів
+            // Create indicators for all stages
             for (let i = 0; i < stages.length; i++) {
                 const stageDiv = document.createElement('div');
                 stageDiv.className = 'stage';
@@ -1028,48 +1028,48 @@
         function updateHintRing() {
             const stage = stages[currentStage];
 
-            // Обчислюємо ширину зони підказки
+            // Calculate hint zone width
             const baseHintWidth = 5;
             const modifierBonus = sleightOfHandModifier * 0.5;
             const hintWidth = Math.max(3, Math.min(15, baseHintWidth + modifierBonus));
 
-            // Визначаємо колір маркерів
+            // Determine marker color
             let markerColor;
             if (hintWidth >= 10) {
-                markerColor = '#4ade80'; // Зелений
+                markerColor = '#4ade80'; // Green
             } else if (hintWidth >= 6) {
-                markerColor = '#fbbf24'; // Жовтий
+                markerColor = '#fbbf24'; // Yellow
             } else {
-                markerColor = '#ef4444'; // Червоний
+                markerColor = '#ef4444'; // Red
             }
 
-            // Швидкість руху - збільшено на ~30%
-            // При +20: 2.8 секунди (було 4)
-            // При -5: 0.7 секунди (було 1)
-            const baseTime = 1400; // Зменшено з 2000
-            const timeModifier = sleightOfHandModifier * 70; // Зменшено з 100
+            // Movement speed - increased ~30% vs original
+            // At +20: 2.8s (was 4s)
+            // At -5: 0.7s (was 1s)
+            const baseTime = 1400; // Reduced from 2000
+            const timeModifier = sleightOfHandModifier * 70; // Reduced from 100
             const movementTime = Math.max(700, Math.min(2800, baseTime + timeModifier));
 
-            // Радіус для розміщення маркерів
+            // Radius for marker placement
             const radius = 160;
 
-            // Очищаємо попередні маркери та створюємо нові
+            // Clear previous markers and create new ones
             hintRing.innerHTML = '';
 
-            // Створюємо центральний маркер (в центрі контейнера)
+            // Create center marker (at container center)
             const centerMarker = document.createElement('div');
             centerMarker.className = 'hint-marker center';
             centerMarker.style.setProperty('--marker-color', markerColor);
             centerMarker.style.transform = `translate(0px, -${radius}px) translate(-50%, -50%)`;
             hintRing.appendChild(centerMarker);
 
-            // Створюємо маркери по краях зони
+            // Create markers at zone edges
             const numberOfMarkers = Math.ceil(hintWidth / 2);
 
             for (let i = 1; i <= numberOfMarkers; i++) {
                 const offset = (hintWidth / numberOfMarkers) * i;
 
-                // Лівий маркер
+                // Left marker
                 const leftMarker = document.createElement('div');
                 leftMarker.className = 'hint-marker';
                 leftMarker.style.setProperty('--marker-color', markerColor);
@@ -1082,7 +1082,7 @@
                 leftMarker.style.opacity = 0.9 - (i * 0.15);
                 hintRing.appendChild(leftMarker);
 
-                // Правий маркер
+                // Right marker
                 const rightMarker = document.createElement('div');
                 rightMarker.className = 'hint-marker';
                 rightMarker.style.setProperty('--marker-color', markerColor);
@@ -1096,16 +1096,16 @@
                 hintRing.appendChild(rightMarker);
             }
 
-            // Базова позиція (центр можливого діапазону)
+            // Base position (center of possible range)
             const basePosition = stage.sweetSpot;
 
-            // Рух по всій ширині замка - 150° діапазон (від -75° до +75°)
+            // Movement across full lock width - 150° range (from -75° to +75°)
             const fullRange = 150;
 
             let currentRotation = basePosition;
             let targetRotation = basePosition;
 
-            // Функція для оновлення обертання
+            // Function to update rotation
             function updateRotation() {
                 if (!isLocked) {
                     if (window.hintInterval) {
@@ -1115,29 +1115,29 @@
                     return;
                 }
 
-                // Генеруємо нову ВИПАДКОВУ позицію в межах всього діапазону
-                // Від (basePosition - 75°) до (basePosition + 75°)
+                // Generate new RANDOM position within the full range
+                // From (basePosition - 75°) to (basePosition + 75°)
                 const randomOffset = (Math.random() - 0.5) * fullRange;
                 targetRotation = basePosition + randomOffset;
 
-                // Плавно обертаємо весь контейнер
+                // Smoothly rotate the entire container
                 hintRing.style.transition = `transform ${movementTime / 1000}s ease-in-out`;
                 hintRing.style.transform = `translate(-50%, -50%) rotate(${targetRotation}deg)`;
 
-                // Оновлюємо позицію солодкої точки для attemptTurn
+                // Update sweet spot position for attemptTurn
                 stage.sweetSpot = targetRotation;
             }
 
-            // Зупиняємо попередній інтервал
+            // Stop previous interval
             if (window.hintInterval) {
                 clearInterval(window.hintInterval);
             }
 
-            // Встановлюємо початкову позицію
+            // Set initial position
             hintRing.style.transition = 'none';
             hintRing.style.transform = `translate(-50%, -50%) rotate(${currentRotation}deg)`;
 
-            // Запускаємо рух після невеликої затримки
+            // Start movement after a short delay
             setTimeout(() => {
                 updateRotation();
                 window.hintInterval = setInterval(updateRotation, movementTime);
@@ -1169,22 +1169,22 @@
 
             const stage = stages[currentStage];
 
-            // Обчислюємо найкоротшу різницю між кутами
+            // Calculate shortest angle difference
             let difference = Math.abs(currentAngle - stage.sweetSpot);
             if (difference > 180) difference = 360 - difference;
 
-            // Обчислюємо ширину зони (така ж формула як в updateHintRing)
+            // Calculate zone width (same formula as in updateHintRing)
             const baseHintWidth = 5;
             const modifierBonus = sleightOfHandModifier * 0.5;
             const hintWidth = Math.max(3, Math.min(15, baseHintWidth + modifierBonus));
 
-            // Перевіряємо чи потрапили точно в центр (в межах range для гарантованого успіху)
+            // Check if hit exactly in center (within range for guaranteed success)
             if (difference <= stage.range) {
-                // Гарантований успіх - точно в центрі
+                // Guaranteed success - exactly in center
                 completeStage();
             } else if (difference <= hintWidth) {
-                // Попали в зону маркерів - є шанс на успіх!
-                // Обчислюємо ймовірність на основі модифікатора
+                // Hit the marker zone - there's a chance for success!
+                // Calculate probability based on modifier
                 const baseProbability = 0.35;
                 const modifierEffect = sleightOfHandModifier * -0.01;
                 const probability = Math.max(0.25, Math.min(0.50, baseProbability + modifierEffect));
@@ -1192,28 +1192,28 @@
                 const roll = Math.random();
 
                 if (roll < probability) {
-                    // Успіх! Пощастило!
-                    updateStatus(`🎲 Пощастило! (шанс: ${Math.round(probability * 100)}%)`, 'success');
+                    // Success! Lucky!
+                    updateStatus(`🎲 Lucky! (chance: ${Math.round(probability * 100)}%)`, 'success');
 
                     setTimeout(() => {
                         completeStage();
                     }, 800);
                 } else {
-                    // Не пощастило - підвищений шанс зламати відмичку (+20%)
-                    const baseBreakChance = 0.30; // 30% базовий шанс
-                    const zoneBreakBonus = 0.20; // +20% за промах в зоні
-                    const breakChance = baseBreakChance + zoneBreakBonus; // = 50% шанс зламати
+                    // No luck - increased chance to break lockpick (+20%)
+                    const baseBreakChance = 0.30; // 30% base chance
+                    const zoneBreakBonus = 0.20; // +20% for missing in zone
+                    const breakChance = baseBreakChance + zoneBreakBonus; // = 50% break chance
 
                     const breakRoll = Math.random();
 
                     if (breakRoll < breakChance) {
-                        // Відмичка ламається!
-                        updateStatus(`💥 Відмичка зламалась! (шанс був: ${Math.round(probability * 100)}%)`, 'fail');
+                        // Lockpick breaks!
+                        updateStatus(`💥 Lockpick broke! (chance was: ${Math.round(probability * 100)}%)`, 'fail');
                         breakLockpick();
                     } else {
-                        // Просто не пощастило, але відмичка ціла
+                        // No luck, but lockpick is intact
                         const maxTurn = Math.max(5, 60 - difference * 1.5);
-                        updateStatus(`❌ Не пощастило (шанс був: ${Math.round(probability * 100)}%)`, 'fail');
+                        updateStatus(`❌ No luck (chance was: ${Math.round(probability * 100)}%)`, 'fail');
 
                         const currentRing = currentStage % 2 === 0 ? lockInnerRing : lockOuterRing;
                         currentRing.style.setProperty('--turn-amount', maxTurn + 'deg');
@@ -1225,7 +1225,7 @@
                     }
                 }
             } else {
-                // Поза зоною - відмичка ламається або частково обертається
+                // Outside zone - lockpick breaks or partially rotates
                 const maxTurn = Math.max(5, 90 - difference * 2);
                 attemptPartialTurn(maxTurn, difference);
             }
@@ -1240,7 +1240,7 @@
             setTimeout(() => {
                 currentRing.classList.remove('turning');
 
-                // Якщо дуже далеко - ламаємо відмичку
+                // If too far - break the lockpick
                 if (difference > 60) {
                     breakLockpick();
                 } else {
@@ -1263,20 +1263,20 @@
                 currentRing.classList.add('stage-complete');
 
                 if (currentStage < stages.length - 1) {
-                    // Переходимо до наступного етапу
+                    // Move to next stage
                     currentStage++;
                     updateStageIndicator();
                     updateHintRing();
-                    updateStatus(`🎯 Етап ${currentStage}/${numberOfRings} пройдено! Продовжуємо...`, 'success');
+                    updateStatus(`🎯 Stage ${currentStage}/${numberOfRings} done! Continuing...`, 'success');
 
                     setTimeout(() => {
-                        updateStatus(`Етап ${currentStage + 1}/${numberOfRings}: Відкрийте наступне кільце`);
-                        // Повертаємо попереднє кільце назад
+                        updateStatus(`Stage ${currentStage + 1}/${numberOfRings}: Open the next ring`);
+                        // Reset previous ring
                         currentRing.classList.remove('success');
                         currentRing.style.transform = 'translate(-50%, -50%) rotate(0deg)';
                     }, 2000);
                 } else {
-                    // Гра завершена!
+                    // Game complete!
                     lockSuccess();
                 }
             }, 800);
@@ -1297,15 +1297,15 @@
                 lockpick.classList.remove('broken');
 
                 if (lockpicksLeft <= 0) {
-                    updateStatus('💔 Відмичок не залишилось! Замок не відкритий.', 'fail');
+                    updateStatus('💔 No lockpicks left! Lock not opened.', 'fail');
                     isLocked = false;
                     if (tg) {
                         setTimeout(() => {
-                            tg.showAlert('Ви зламали всі відмички! Спробуйте ще раз.');
+                            tg.showAlert('You broke all your lockpicks! Try again.');
                         }, 500);
                     }
                 } else {
-                    updateStatus(`💥 Відмичка зламалась! Залишилось: ${lockpicksLeft}`, 'fail');
+                    updateStatus(`💥 Lockpick broke! Remaining: ${lockpicksLeft}`, 'fail');
                 }
             }, 400);
         }
@@ -1313,18 +1313,18 @@
         function lockSuccess() {
             isLocked = false;
 
-            // Зупиняємо рух підказки
+            // Stop hint movement
             if (window.hintInterval) {
                 clearInterval(window.hintInterval);
             }
 
             updateStageIndicator();
-            updateStatus(`🎉 Замок повністю відкрито! Пройдено ${numberOfRings} кілець!`, 'success');
+            updateStatus(`🎉 Lock fully opened! Cleared ${numberOfRings} rings!`, 'success');
 
             if (tg) {
                 setTimeout(() => {
                     const used = totalLockpicks - lockpicksLeft;
-                    tg.showAlert(`Вітаємо! Ви відкрили замок!\n\nПройдено кілець: ${numberOfRings}\nВикористано відмичок: ${used}\nЗалишилось: ${lockpicksLeft}`);
+                    tg.showAlert(`Congratulations! You opened the lock!\n\nRings cleared: ${numberOfRings}\nLockpicks used: ${used}\nRemaining: ${lockpicksLeft}`);
                 }, 1000);
             }
         }
@@ -1334,17 +1334,17 @@
                 tg.HapticFeedback.impactOccurred('light');
             }
 
-            // Повертаємось на екран налаштування
+            // Return to settings screen
             gameContainer.classList.remove('active');
             setupScreen.classList.remove('hidden');
 
-            // Зупиняємо інтервал підказки
+            // Stop hint interval
             if (window.hintInterval) {
                 clearInterval(window.hintInterval);
             }
         }
 
-        // Обробка миші та дотику
+        // Mouse and touch handling
         function getAngleFromMouse(clientX, clientY) {
             const rect = lockArea.getBoundingClientRect();
             const centerX = rect.left + rect.width / 2;
@@ -1373,7 +1373,7 @@
             rotateLockpick(angle);
         });
 
-        // Клавіша пробіл
+        // Space key
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
@@ -1385,7 +1385,7 @@
         const turnBtn = document.getElementById('turnBtn');
 
         turnBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // блокує ghost click та подвійний тач
+            e.preventDefault(); // blocks ghost click and double-tap
             turnBtn.classList.add('pressed');
             attemptTurn();
         }, { passive: false });
@@ -1399,13 +1399,13 @@
             turnBtn.classList.remove('pressed');
         });
 
-        // Fallback для миші (десктоп)
+        // Mouse fallback (desktop)
         turnBtn.addEventListener('mousedown', (e) => {
             e.preventDefault();
             attemptTurn();
         });
 
-        // Ініціалізація налаштувань
+        // Initialize settings
         updateSetup();
     </script>
 </body>

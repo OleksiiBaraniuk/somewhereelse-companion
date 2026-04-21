@@ -12,12 +12,12 @@ export default {
   difficulty: 'medium',
   tags: ['skill', 'minigame'],
   
-  // Мета-дані
+  // Metadata
   skillCheck: 'dexterity',
   recommendedLevel: 2,
   avgPlayTime: '3-5 minutes',
   
-  // Правила
+  // Rules
   rules: [
     'Players take turns rolling a six-sided die',
     'and placing it in one of their three columns.',

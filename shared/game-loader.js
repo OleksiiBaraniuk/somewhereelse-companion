@@ -1,9 +1,9 @@
 /**
- * Game Loader - Динамічне завантаження міні-ігор
- * Автоматично знаходить і завантажує конфігурації всіх ігор
+ * Game Loader - Dynamic loading of mini-games
+ * Automatically finds and loads configurations for all games
  */
 
-// Список всіх доступних ігор (просто ID папок)
+// List of all available games (folder IDs)
 const AVAILABLE_GAMES = [
   'lockpicking',
   'qte',
@@ -12,34 +12,34 @@ const AVAILABLE_GAMES = [
 ]
 
 /**
- * Завантажити конфігурації всіх ігор
- * @returns {Promise<Array>} Масив об'єктів з конфігураціями ігор
+ * Load configurations for all games
+ * @returns {Promise<Array>} Array of game config objects
  */
 export async function loadAllGames() {
   const games = []
-  
+
   for (const gameId of AVAILABLE_GAMES) {
     try {
-      // Динамічний імпорт конфігу гри
+      // Dynamic import of game config
       const module = await import(`./games/${gameId}/game-config.js`)
       const config = module.default
-      
-      // Додати шлях до гри
+
+      // Add game path
       config.path = `/shared/games/${gameId}/index.html`
-      
+
       games.push(config)
     } catch (error) {
       console.warn(`⚠️ Failed to load game: ${gameId}`, error)
     }
   }
-  
+
   return games
 }
 
 /**
- * Завантажити конфіг конкретної гри
- * @param {string} gameId - ID гри
- * @returns {Promise<Object>} Конфіг гри
+ * Load config for a specific game
+ * @param {string} gameId - Game ID
+ * @returns {Promise<Object>} Game config
  */
 export async function loadGame(gameId) {
   try {
@@ -54,20 +54,20 @@ export async function loadGame(gameId) {
 }
 
 /**
- * Фільтрувати ігри по статусу
- * @param {Array} games - Масив ігор
- * @param {string} status - Статус ('available', 'coming-soon', 'beta')
- * @returns {Array} Відфільтровані ігри
+ * Filter games by status
+ * @param {Array} games - Array of games
+ * @param {string} status - Status ('available', 'coming-soon', 'beta')
+ * @returns {Array} Filtered games
  */
 export function filterGamesByStatus(games, status) {
   return games.filter(game => game.status === status)
 }
 
 /**
- * Фільтрувати ігри по тегу
- * @param {Array} games - Масив ігор
- * @param {string} tag - Тег
- * @returns {Array} Відфільтровані ігри
+ * Filter games by tag
+ * @param {Array} games - Array of games
+ * @param {string} tag - Tag
+ * @returns {Array} Filtered games
  */
 export function filterGamesByTag(games, tag) {
   return games.filter(game => game.tags && game.tags.includes(tag))

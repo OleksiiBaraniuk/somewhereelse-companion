@@ -2,68 +2,74 @@
 
 **Version:** a12-e
 
-D&D companion Telegram Mini App для групових та приватних чатів.
-Довгострокова мета — повноцінна альтернатива Roll20.
+SomewhereElse Companion is a tool — an app that expands possible interactions with the game world through mini-games that transform the approach to seemingly ordinary activities. Lock-picking, QTE, puzzles and more.
+
+Campaign Features add unique, adventure-specific functionality for each campaign.
+
+This is a tool that removes old limitations and builds new ones at the boundary of imagination.
+
+Looking ahead, character creation and management will be added — not only for the upcoming virtual board *SomewhereElse Place*, but also for physical sessions.
+
+**Companion is an extension for your game.**
 
 > Idea: Baraniuk · Code: Claude (Anthropic AI Assistant)
 
 ---
 
-## Швидкий старт
+## Quick Start
 
 ```bash
-python3 "a11 - extended/server.py"
+python3 server.py
 # → http://localhost:8080
 ```
 
-Або відкрий через Telegram Mini App (webhook налаштовано в `Bot/bot_v6.py`).
+Or open via Telegram Mini App (webhook configured in `Bot/bot_v6.py`).
 
 ---
 
-## Структура проєкту
+## Project Structure
 
 ```
-a11 - extended/
-├── index.html                        # Головний хаб
-├── server.py                         # Локальний dev сервер (порт 8080)
+├── index.html                        # Main hub
+├── server.py                         # Local dev server (port 8080)
 │
 ├── shared/
-│   ├── styles.css                    # Єдине джерело стилів (medieval D&D тема)
-│   ├── main.js                       # Ініціалізація хабу, логіка гаманця
-│   ├── supabase.js                   # Supabase client + DB helper функції
+│   ├── styles.css                    # Single source of styles (medieval D&D theme)
+│   ├── main.js                       # Hub initialization, wallet logic
+│   ├── supabase.js                   # Supabase client + DB helper functions
 │   ├── telegram.js                   # Telegram WebApp SDK helpers
-│   ├── game-loader.js                # Динамічне завантаження міні-ігор
-│   ├── feature-loader.js             # Динамічне завантаження campaign features
+│   ├── game-loader.js                # Dynamic mini-game loading
+│   ├── feature-loader.js             # Dynamic campaign feature loading
 │   │
 │   ├── games/
-│   │   ├── lockpicking/              # Скайрімський замок (skill-based)
-│   │   ├── qte/                      # Quick Time Event (рефлекси)
-│   │   ├── minigame1/                # KnuckleBones v2 (кістки, ставки)
-│   │   └── slots/                    # Tavern Slots v2 (слоти, ставки)
+│   │   ├── lockpicking/              # Skyrim-style lockpicking (skill-based)
+│   │   ├── qte/                      # Quick Time Event (reflexes)
+│   │   ├── minigame1/                # KnuckleBones v2 (dice, bets)
+│   │   └── slots/                    # Tavern Slots v2 (slots, bets)
 │   │
 │   └── features/
-│       └── ship-management/          # Оснащення та покупка кораблів
+│       └── ship-management/          # Ship equipment and purchase
 │
-├── dm/index.html                     # DM панель (тільки для Dungeon Master)
+├── dm/index.html                     # DM panel (Dungeon Master only)
 ├── inventory/index.html              # Placeholder
 ├── map/index.html                    # Placeholder
 ├── notes/index.html                  # Placeholder
 │
 └── assets/
-    ├── ships/                        # Зображення кораблів
-    ├── icons/                        # Іконки модулів (гармати, корпуси)
-    └── backgrounds/                  # Фонові зображення
+    ├── ships/                        # Ship images
+    ├── icons/                        # Module icons (cannons, hulls)
+    └── backgrounds/                  # Background images
 
 Bot/
-└── bot_v6.py                         # Telegram бот (python-telegram-bot)
+└── bot_v6.py                         # Telegram bot (python-telegram-bot)
 ```
 
 ---
 
 ## Tech Stack
 
-| Шар | Технологія |
-|-----|-----------|
+| Layer | Technology |
+|-------|-----------|
 | Frontend | Vanilla JS, HTML, CSS |
 | Platform | Telegram Mini App (WebApp SDK) |
 | Backend | Supabase (PostgreSQL + Realtime) |
@@ -71,35 +77,35 @@ Bot/
 
 ---
 
-## Основні системи
+## Core Systems
 
-### Гаманець
-Зберігається в `localStorage` під двома ключами для сумісності з міні-іграми:
+### Wallet
+Stored in `localStorage` under two keys for mini-game compatibility:
 - `companion_wallet` — `{ gold, silver, copper }`
-- `companion-gold` — число (читається іграми)
+- `companion-gold` — number (read by games)
 
-### Міні-ігри
-Кожна гра — окрема папка `shared/games/{id}/` з `game-config.js` та `index.html`.
-Список у `AVAILABLE_GAMES` в `game-loader.js`. Картки рендеряться автоматично.
+### Mini-Games
+Each game is a separate folder `shared/games/{id}/` with `game-config.js` and `index.html`.
+Listed in `AVAILABLE_GAMES` in `game-loader.js`. Cards are rendered automatically.
 
 ### Campaign Features
-Кожна фіча — `shared/features/{id}/` з `feature-config.js` та `index.html`.
-Список у `AVAILABLE_FEATURES` в `feature-loader.js`.
+Each feature is `shared/features/{id}/` with `feature-config.js` and `index.html`.
+Listed in `AVAILABLE_FEATURES` in `feature-loader.js`.
 
 ### Ship Management
-Гравці обирають оснащення/корабель → надсилають запит DM → DM approve/reject у DM панелі.
-Бюджет команди (GP) встановлює DM у своїй панелі → синхронізується через Supabase.
+Players choose equipment/ship → send request to DM → DM approve/reject in DM panel.
+Crew budget (GP) is set by DM in their panel → synced via Supabase.
 
-**Поточний корабель:** White Wolf
-**Доступні гармати:** Альбатрос · Контроль · Муха
-**Доступні корпуси:** Укріплене дерево · Метал Тонк
-**Кораблі:** Вітер Кортора (1350 gp) · Корпус КРЕСТ (1850 gp)
+**Current ship:** White Wolf
+**Available cannons:** Albatross · Control · Fly
+**Available hulls:** Reinforced Wood · Metal Tonk
+**Ships:** Wind of Cortor (1350 gp) · KREST Hull (1850 gp)
 
-### DM Панель
-- Доступ: тільки якщо `telegram_id` є `dm_id` активної кампанії
-- Dev режим (localhost): автоматично `id: 123456789`
-- Функції: Approve/Reject запитів, встановлення бюджету команди, перегляд гравців
-- Realtime: підписка на `ship_actions` без перезавантаження
+### DM Panel
+- Access: only if `telegram_id` matches `dm_id` of active campaign
+- Dev mode (localhost): auto `id: 123456789`
+- Features: Approve/Reject requests, set crew budget, view players
+- Realtime: subscription to `ship_actions` without page reload
 
 ---
 
@@ -107,46 +113,46 @@ Bot/
 
 **Project ID:** `xohzvemfeqqcijcipcwj` (eu-west-1)
 
-| Таблиця | Призначення |
-|---------|-------------|
-| `players` | Telegram користувачі |
-| `characters` | Персонажі гравців |
-| `campaigns` | D&D кампанії |
-| `campaign_participants` | Зв'язок персонажів з кампаніями |
-| `ships` | Стан корабля + бюджет команди |
-| `ship_actions` | Запити гравців → DM схвалює/відхиляє |
-| `game_results` | Результати міні-ігор |
-| `active_games` | Активні ігри (real-time) |
-| `dice_rolls` | Історія кидків кубиків |
+| Table | Purpose |
+|-------|---------|
+| `players` | Telegram users |
+| `characters` | Player characters |
+| `campaigns` | D&D campaigns |
+| `campaign_participants` | Character-campaign links |
+| `ships` | Ship state + crew budget |
+| `ship_actions` | Player requests → DM approves/rejects |
+| `game_results` | Mini-game results |
+| `active_games` | Active games (real-time) |
+| `dice_rolls` | Dice roll history |
 
-**Активна кампанія:** `39d3349e-8cc6-4bf1-b07a-a89bd45a0831` — *Pirates of the Caribbean Seas*
+**Active campaign:** `39d3349e-8cc6-4bf1-b07a-a89bd45a0831` — *Pirates of the Caribbean Seas*
 
 ---
 
-## Тестові акаунти
+## Test Accounts
 
-| Telegram ID | Ім'я | Роль |
+| Telegram ID | Name | Role |
 |-------------|------|------|
 | `123456789` | dm_master | DM (dev fallback) |
-| `111111111` | Dummy | Гравець |
-| `222222222` | Dummy2 | Гравець |
+| `111111111` | Dummy | Player |
+| `222222222` | Dummy2 | Player |
 
 ---
 
-## Бот
+## Bot
 
 ```bash
 pip install python-telegram-bot --break-system-packages
 python3 Bot/bot_v6.py
 ```
 
-Команди: `/start` · `/sheet` · `/combat` · `/games`
+Commands: `/start` · `/sheet` · `/combat` · `/games`
 
 ---
 
 ## Changelog
 
-| Версія | Дата | Зміни |
-|--------|------|-------|
-| a12-e | 2026-04-20 | Ship Management підключено, DM Crew Budget, виправлено баги INSERT/export, нові гармати/корпуси/кораблі з іконками |
-| a11-e | 2026-04-15 | Перша повна версія: хаб, гаманець, міні-ігри, DM панель, Supabase інфраструктура |
+| Version | Date | Changes |
+|---------|------|---------|
+| a12-e | 2026-04-20 | Ship Management live, DM Crew Budget, fixed INSERT/export bugs, new cannons/hulls/ships with icons |
+| a11-e | 2026-04-15 | First full version: hub, wallet, mini-games, DM panel, Supabase infrastructure |

@@ -192,14 +192,14 @@
     </div>
 
     <script>
-        // Ініціалізація Telegram Web App
+        // Initialize Telegram Web App
         let tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
         tg.setHeaderColor('#1a1a2e');
         tg.setBackgroundColor('#16213e');
 
-        // Кнопка "Назад"
+        // Back button
         tg.BackButton.show();
         tg.BackButton.onClick(() => {
             window.history.back();
@@ -208,7 +208,7 @@
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         
-        // Адаптація під розмір екрану
+        // Adapt to screen size
         function resizeCanvas() {
             const container = document.querySelector('.game-container');
             const maxWidth = Math.min(600, container.clientWidth - 40);
@@ -236,7 +236,7 @@
         let mistakes = 0;
         const MAX_MISTAKES = 3;
 
-        // Частинки
+        // Particles
         for (let i = 0; i < 40; i++) {
             particles.push({
                 x: Math.random() * canvas.width,
@@ -391,7 +391,7 @@
         }
 
         function startGame() {
-            // Вібрація
+            // Haptic feedback
             if (tg.HapticFeedback) {
                 tg.HapticFeedback.impactOccurred('medium');
             }
@@ -445,11 +445,11 @@
                 document.querySelectorAll('.dpad-btn').forEach(btn => btn.classList.remove('highlight'));
                 nextLetter();
             } else if ('WASD'.includes(pressed)) {
-                // Неправильна кнопка — тільки якщо це одна з WASD
+                // Wrong button — only if it is one of WASD
                 mistakes++;
                 if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
 
-                // Підсвітити неправильну кнопку червоним
+                // Highlight wrong button red
                 const wrongBtn = document.querySelector(`.dpad-btn[data-key="${pressed}"]`);
                 if (wrongBtn) {
                     wrongBtn.style.borderColor = '#ef4444';
@@ -461,7 +461,7 @@
             }
 
     if (mistakes >= MAX_MISTAKES) {
-        // Програш через помилки
+        // Loss due to mistakes
         gameState = 'lose';
         document.getElementById('status').textContent = `💀 3 mistakes! Needed: ${currentLetter}`;
         document.getElementById('status').className = 'status fail';

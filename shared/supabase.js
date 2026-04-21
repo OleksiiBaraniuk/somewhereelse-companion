@@ -8,18 +8,18 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 // ================================================
 // CONFIGURATION
 // ================================================
-// TODO: Замініть на ваші дані з Supabase Dashboard
+// TODO: Replace with your credentials from Supabase Dashboard
 const SUPABASE_URL = 'https://xohzvemfeqqcijcipcwj.supabase.co' // https://xxxxx.supabase.co
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvaHp2ZW1mZXFxY2lqY2lwY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjAwMTUsImV4cCI6MjA4ODgzNjAxNX0.3wxU293d0bTZPzgNrywoOdCTdK-KyDSh0WSoQVYP63A'
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 // ================================================
-// PLAYERS (Гравці)
+// PLAYERS
 // ================================================
 
 /**
- * Створити або оновити гравця
+ * Create or update player
  */
 export async function ensurePlayer(telegramUser) {
   try {
@@ -30,13 +30,13 @@ export async function ensurePlayer(telegramUser) {
         username: telegramUser.username,
         first_name: telegramUser.first_name,
         last_name: telegramUser.last_name
-      }, { 
+      }, {
         onConflict: 'telegram_id',
-        ignoreDuplicates: false 
+        ignoreDuplicates: false
       })
       .select()
       .single()
-    
+
     if (error) throw error
     return data
   } catch (error) {
@@ -46,7 +46,7 @@ export async function ensurePlayer(telegramUser) {
 }
 
 /**
- * Отримати статистику гравця
+ * Get player stats
  */
 export async function getPlayerStats(telegramId) {
   try {
@@ -55,7 +55,7 @@ export async function getPlayerStats(telegramId) {
       .select('total_games, total_wins')
       .eq('telegram_id', telegramId)
       .single()
-    
+
     if (error) throw error
     return data
   } catch (error) {
@@ -65,11 +65,11 @@ export async function getPlayerStats(telegramId) {
 }
 
 // ================================================
-// CHARACTERS (Персонажі)
+// CHARACTERS
 // ================================================
 
 /**
- * Перевірити чи має гравець персонажа
+ * Check if player has a character
  */
 export async function hasCharacter(telegramId) {
   try {
@@ -79,7 +79,7 @@ export async function hasCharacter(telegramId) {
       .eq('player_id', telegramId)
       .eq('is_active', true)
       .single()
-    
+
     return !!data
   } catch (error) {
     return false
@@ -87,7 +87,7 @@ export async function hasCharacter(telegramId) {
 }
 
 /**
- * Створити нового персонажа (базовий - тільки ім'я)
+ * Create new character (basic - name only)
  */
 export async function createCharacter(telegramId, characterName) {
   try {
@@ -101,7 +101,7 @@ export async function createCharacter(telegramId, characterName) {
       })
       .select()
       .single()
-    
+
     if (error) throw error
     return data
   } catch (error) {
@@ -111,7 +111,7 @@ export async function createCharacter(telegramId, characterName) {
 }
 
 /**
- * Отримати активного персонажа гравця
+ * Get active character for player
  */
 export async function getActiveCharacter(telegramId) {
   try {
@@ -121,7 +121,7 @@ export async function getActiveCharacter(telegramId) {
       .eq('player_id', telegramId)
       .eq('is_active', true)
       .single()
-    
+
     if (error) throw error
     return data
   } catch (error) {
@@ -131,7 +131,7 @@ export async function getActiveCharacter(telegramId) {
 }
 
 /**
- * Оновити персонажа
+ * Update character
  */
 export async function updateCharacter(characterId, updates) {
   try {
@@ -141,7 +141,7 @@ export async function updateCharacter(characterId, updates) {
       .eq('id', characterId)
       .select()
       .single()
-    
+
     if (error) throw error
     return data
   } catch (error) {
@@ -151,11 +151,11 @@ export async function updateCharacter(characterId, updates) {
 }
 
 // ================================================
-// CAMPAIGNS (Кампанії)
+// CAMPAIGNS
 // ================================================
 
 /**
- * Отримати features поточної кампанії
+ * Get features for current campaign
  */
 export async function getCampaignFeatures(campaignId) {
   try {
@@ -164,7 +164,7 @@ export async function getCampaignFeatures(campaignId) {
       .select('features')
       .eq('id', campaignId)
       .single()
-    
+
     if (error) throw error
     return data?.features || []
   } catch (error) {
@@ -174,7 +174,7 @@ export async function getCampaignFeatures(campaignId) {
 }
 
 /**
- * Отримати активні кампанії
+ * Get active campaigns
  */
 export async function getActiveCampaigns() {
   try {
@@ -183,7 +183,7 @@ export async function getActiveCampaigns() {
       .select('*')
       .eq('status', 'active')
       .order('created_at', { ascending: false })
-    
+
     if (error) throw error
     return data || []
   } catch (error) {
@@ -193,11 +193,11 @@ export async function getActiveCampaigns() {
 }
 
 // ================================================
-// ACTIVE GAMES (Активні ігри)
+// ACTIVE GAMES
 // ================================================
 
 /**
- * Почати активну гру
+ * Start active game
  */
 export async function startActiveGame(gameType, playerId, characterId, config = {}) {
   try {
@@ -207,13 +207,13 @@ export async function startActiveGame(gameType, playerId, characterId, config = 
       game_type: gameType,
       ...config
     }
-    
+
     const { data, error } = await supabase
       .from('active_games')
       .insert(gameData)
       .select()
       .single()
-    
+
     if (error) throw error
     return data
   } catch (error) {
@@ -223,7 +223,7 @@ export async function startActiveGame(gameType, playerId, characterId, config = 
 }
 
 /**
- * Оновити прогрес активної гри
+ * Update active game progress
  */
 export async function updateActiveGame(gameId, updates) {
   try {
@@ -234,7 +234,7 @@ export async function updateActiveGame(gameId, updates) {
         last_action_at: new Date().toISOString()
       })
       .eq('id', gameId)
-    
+
     if (error) throw error
     return true
   } catch (error) {
@@ -244,25 +244,25 @@ export async function updateActiveGame(gameId, updates) {
 }
 
 /**
- * Завершити гру і зберегти результат
+ * End game and save result
  */
 export async function endGame(gameId, result) {
   try {
-    // Зберегти результат
+    // Save result
     const { error: resultError } = await supabase
       .from('game_results')
       .insert(result)
-    
+
     if (resultError) throw resultError
-    
-    // Видалити з активних
+
+    // Remove from active games
     const { error: deleteError } = await supabase
       .from('active_games')
       .delete()
       .eq('id', gameId)
-    
+
     if (deleteError) throw deleteError
-    
+
     return true
   } catch (error) {
     console.error('Error ending game:', error)
@@ -271,7 +271,7 @@ export async function endGame(gameId, result) {
 }
 
 /**
- * Отримати всі активні ігри (для DM Dashboard)
+ * Get all active games (for DM Dashboard)
  */
 export async function getActiveGames() {
   try {
@@ -283,7 +283,7 @@ export async function getActiveGames() {
         characters:character_id (name, class, level)
       `)
       .order('last_action_at', { ascending: false })
-    
+
     if (error) throw error
     return data || []
   } catch (error) {
@@ -293,11 +293,11 @@ export async function getActiveGames() {
 }
 
 // ================================================
-// GAME RESULTS (Результати ігор)
+// GAME RESULTS
 // ================================================
 
 /**
- * Отримати останні результати
+ * Get recent results
  */
 export async function getRecentResults(limit = 10) {
   try {
@@ -310,7 +310,7 @@ export async function getRecentResults(limit = 10) {
       `)
       .order('created_at', { ascending: false })
       .limit(limit)
-    
+
     if (error) throw error
     return data || []
   } catch (error) {
@@ -320,7 +320,7 @@ export async function getRecentResults(limit = 10) {
 }
 
 /**
- * Отримати результати гравця
+ * Get player results
  */
 export async function getPlayerResults(telegramId, gameType = null) {
   try {
@@ -329,13 +329,13 @@ export async function getPlayerResults(telegramId, gameType = null) {
       .select('*')
       .eq('player_id', telegramId)
       .order('created_at', { ascending: false })
-    
+
     if (gameType) {
       query = query.eq('game_type', gameType)
     }
-    
+
     const { data, error } = await query
-    
+
     if (error) throw error
     return data || []
   } catch (error) {
@@ -345,11 +345,11 @@ export async function getPlayerResults(telegramId, gameType = null) {
 }
 
 // ================================================
-// DICE ROLLS (Кидки кубиків)
+// DICE ROLLS
 // ================================================
 
 /**
- * Зберегти кидок кубика
+ * Save dice roll
  */
 export async function saveDiceRoll(characterId, rollData) {
   try {
@@ -361,7 +361,7 @@ export async function saveDiceRoll(characterId, rollData) {
       })
       .select()
       .single()
-    
+
     if (error) throw error
     return data
   } catch (error) {
@@ -371,11 +371,11 @@ export async function saveDiceRoll(characterId, rollData) {
 }
 
 // ================================================
-// REAL-TIME SUBSCRIPTIONS (для DM Dashboard)
+// REAL-TIME SUBSCRIPTIONS (for DM Dashboard)
 // ================================================
 
 /**
- * Підписатись на зміни в активних іграх
+ * Subscribe to active game changes
  */
 export function subscribeToActiveGames(callback) {
   return supabase
@@ -389,7 +389,7 @@ export function subscribeToActiveGames(callback) {
 }
 
 /**
- * Підписатись на нові результати
+ * Subscribe to new game results
  */
 export function subscribeToGameResults(callback) {
   return supabase
@@ -403,7 +403,7 @@ export function subscribeToGameResults(callback) {
 }
 
 /**
- * Відписатись від каналу
+ * Unsubscribe from channel
  */
 export function unsubscribe(channel) {
   if (channel) {
@@ -416,7 +416,7 @@ export function unsubscribe(channel) {
 // ================================================
 
 /**
- * Перевірити підключення до Supabase
+ * Test Supabase connection
  */
 export async function testConnection() {
   try {
@@ -424,7 +424,7 @@ export async function testConnection() {
       .from('players')
       .select('count')
       .limit(1)
-    
+
     return !error
   } catch (error) {
     console.error('Supabase connection error:', error)
@@ -433,7 +433,7 @@ export async function testConnection() {
 }
 
 /**
- * Отримати URL та Key для перевірки
+ * Get URL and Key for verification
  */
 export function getSupabaseConfig() {
   return {

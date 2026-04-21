@@ -2,17 +2,17 @@
  * Main JavaScript for Adventurer's Companion
  */
 
-import { 
-    supabase, 
-    ensurePlayer, 
-    hasCharacter, 
+import {
+    supabase,
+    ensurePlayer,
+    hasCharacter,
     createCharacter as dbCreateCharacter,
     getActiveCharacter,
     getPlayerStats
 } from './supabase.js'
 
-import { 
-    initTelegram, 
+import {
+    initTelegram,
     getTelegramUser,
     hapticFeedback,
     showAlert,
@@ -34,44 +34,44 @@ let currentCharacter = null
 
 async function init() {
     console.log('🎮 Initializing Adventurer\'s Companion...')
-    
-    // Ініціалізація Telegram
+
+    // Initialize Telegram
     initTelegram()
-    
-    // Отримати користувача
+
+    // Get user
     currentUser = getTelegramUser()
-    
+
     if (!currentUser) {
         showAlert('⚠️ Please open this app through Telegram')
         document.getElementById('characterName').textContent = 'Not in Telegram'
         return
     }
-    
+
     console.log('👤 User:', currentUser)
-    
+
     try {
-        // Створити/оновити гравця в БД
+        // Create/update player in DB
         await ensurePlayer(currentUser)
-        
-        // Перевірити чи є персонаж
+
+        // Check if character exists
         const hasChar = await hasCharacter(currentUser.id)
-        
+
         if (!hasChar) {
-            // Показати модальне вікно створення персонажа
+            // Show character creation modal
             showCharacterCreationModal()
         } else {
-            // Завантажити персонажа
+            // Load character
             await loadCharacter()
         }
-        
-        // Завантажити статистику
+
+        // Load stats
         await loadPlayerStats()
-        
-        // Завантажити та показати ігри і фічі
+
+        // Load and render games and features
         await renderGames()
         await renderFeatures()
 
-        // Оновити бейдж гаманця
+        // Update wallet badge
         updateWalletBadge()
     } catch (error) {
         console.error('Initialization error:', error)
@@ -88,31 +88,31 @@ async function renderGames() {
         console.log('🎮 Loading games...')
         const games = await loadAllGames()
         const container = document.querySelector('#gamesContainer')
-        
+
         if (!container) {
             console.warn('Games container not found')
             return
         }
-        
-        // Очистити контейнер
+
+        // Clear container
         container.innerHTML = ''
-        
-        // Рендер кожної гри
+
+        // Render each game
         games.forEach(game => {
             const gameCard = document.createElement('div')
             gameCard.className = `game-card ${game.status === 'coming-soon' ? 'coming-soon' : ''}`
             gameCard.onclick = () => openGame(game.id)
-            
+
             gameCard.innerHTML = `
                 <div class="game-icon">${game.icon}</div>
                 <h4>${game.title}</h4>
                 <p class="game-desc">${game.description}</p>
                 ${game.status === 'beta' ? '<span class="beta-badge">BETA</span>' : ''}
             `
-            
+
             container.appendChild(gameCard)
         })
-        
+
         console.log(`✅ Loaded ${games.length} games`)
     } catch (error) {
         console.error('Error loading games:', error)
@@ -124,36 +124,36 @@ async function renderFeatures() {
         console.log('🚢 Loading features...')
         const features = await loadAllFeatures()
         const container = document.querySelector('#campaignFeatures')
-        
+
         if (!container) {
             console.warn('Features container not found')
             return
         }
-        
-        // Очистити контейнер
+
+        // Clear container
         container.innerHTML = ''
-        
-        // Рендер кожної фічі
+
+        // Render each feature
         features.forEach(feature => {
             const featureCard = document.createElement('div')
             featureCard.className = `feature-card ${feature.status === 'coming-soon' ? 'coming-soon' : ''}`
             featureCard.onclick = () => openFeature(feature.id)
-            
-            const itemsList = feature.items 
+
+            const itemsList = feature.items
                 ? `<ul class="feature-list">
                     ${feature.items.map(item => `<li>${item}</li>`).join('')}
                    </ul>`
                 : ''
-            
+
             featureCard.innerHTML = `
                 <div class="feature-icon">${feature.icon}</div>
                 <h4>${feature.title}</h4>
                 ${itemsList}
             `
-            
+
             container.appendChild(featureCard)
         })
-        
+
         console.log(`✅ Loaded ${features.length} features`)
     } catch (error) {
         console.error('Error loading features:', error)
@@ -168,36 +168,36 @@ function showCharacterCreationModal() {
     const modal = document.getElementById('characterModal')
     modal.classList.remove('hidden')
     modal.classList.add('fade-in')
-    
+
     hapticFeedback('light')
 }
 
 window.createCharacterHandler = async function(event) {
     event.preventDefault()
-    
+
     const nameInput = document.getElementById('characterNameInput')
     const name = nameInput.value.trim()
-    
+
     if (!name) {
         showAlert('Please enter a character name')
         return
     }
-    
+
     hapticFeedback('medium')
-    
+
     try {
-        // Створити персонажа в БД
+        // Create character in DB
         const character = await dbCreateCharacter(currentUser.id, name)
-        
+
         if (character) {
             currentCharacter = character
-            
-            // Сховати модальне вікно
+
+            // Hide modal
             document.getElementById('characterModal').classList.add('hidden')
-            
-            // Показати персонажа
+
+            // Show character
             displayCharacter(character)
-            
+
             hapticFeedback('success')
             showAlert(`Welcome, ${name}! Your adventure begins! 🎉`)
         } else {
@@ -213,11 +213,11 @@ window.createCharacterHandler = async function(event) {
 async function loadCharacter() {
     try {
         currentCharacter = await getActiveCharacter(currentUser.id)
-        
+
         if (currentCharacter) {
             displayCharacter(currentCharacter)
         } else {
-            // Якщо персонажа не знайдено, показати створення
+            // If character not found, show creation
             showCharacterCreationModal()
         }
     } catch (error) {
@@ -227,28 +227,28 @@ async function loadCharacter() {
 }
 
 function displayCharacter(character) {
-    // Оновити UI
+    // Update UI
     document.getElementById('characterName').textContent = character.name
-    document.getElementById('characterClass').textContent = 
+    document.getElementById('characterClass').textContent =
         `Level ${character.level} ${character.class || 'Adventurer'}`
-    
-    // Stats (поки статичні, пізніше з character sheet)
-    document.getElementById('characterHP').textContent = 
+
+    // Stats (static for now, later from character sheet)
+    document.getElementById('characterHP').textContent =
         `${character.hp_current || 20}/${character.hp_max || 20}`
-    document.getElementById('characterAC').textContent = 
+    document.getElementById('characterAC').textContent =
         character.armor_class || 12
-    document.getElementById('characterDice').textContent = 
-        '1d6' // TODO: розрахувати з класу
-    
+    document.getElementById('characterDice').textContent =
+        '1d6' // TODO: calculate from class
+
     console.log('✅ Character loaded:', character.name)
 }
 
 async function loadPlayerStats() {
     try {
         const stats = await getPlayerStats(currentUser.id)
-        
+
         if (stats && stats.total_games > 0) {
-            // TODO: Показати статистику якщо потрібно
+            // TODO: Show stats if needed
             console.log('📊 Player stats:', stats)
         }
     } catch (error) {
@@ -262,30 +262,30 @@ async function loadPlayerStats() {
 
 window.viewCharacterSheet = function() {
     hapticFeedback('light')
-    // TODO: створити character-sheet.html
+    // TODO: create character-sheet.html
     showAlert('📜 Character Sheet coming soon!')
 }
 
 window.openGame = function(gameId) {
     hapticFeedback('medium')
-    
+
     if (!currentCharacter) {
         showAlert('Please create a character first!')
         return
     }
-    
+
     // TODO: Navigate to game
     window.location.href = `shared/games/${gameId}/index.html`
 }
 
 window.openFeature = function(featureId) {
     hapticFeedback('medium')
-    
+
     if (!currentCharacter) {
         showAlert('Please create a character first!')
         return
     }
-    
+
     // TODO: Navigate to feature
     window.location.href = `shared/features/${featureId}/index.html`
 }
@@ -326,7 +326,7 @@ function loadWallet() {
     const stored = localStorage.getItem(WALLET_KEY)
     if (stored) {
         const wallet = JSON.parse(stored)
-        // Синхронізуємо золото якщо гра змінила companion-gold
+        // Sync gold if a game changed companion-gold
         if (wallet.gold !== currentGold) {
             wallet.gold = currentGold
             localStorage.setItem(WALLET_KEY, JSON.stringify(wallet))
@@ -369,7 +369,7 @@ window.saveWallet = function() {
         copper: parseInt(document.getElementById('walletCopper').value) || 0
     }
     localStorage.setItem(WALLET_KEY, JSON.stringify(wallet))
-    localStorage.setItem('companion-gold', wallet.gold) // сумісність з іграми
+    localStorage.setItem('companion-gold', wallet.gold) // game compatibility
     updateWalletBadge()
     closeWallet()
     hapticFeedback('success')
